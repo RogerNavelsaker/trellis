@@ -1,5 +1,8 @@
 # trellis
 
+[![npm version](https://img.shields.io/npm/v/%40os-eco%2Ftrellis-cli)](https://www.npmjs.com/package/@os-eco/trellis-cli)
+[![license](https://img.shields.io/github/license/RogerNavelsaker/trellis)](LICENSE)
+
 Git-native specs, plans, and handoff artifacts for the `os-eco` toolchain.
 
 Trellis is a candidate replacement for the OpenSpec-shaped workflow artifacts introduced in `overstory` PR `#130`. The intent is to move specification and plan artifacts into their own first-class tool so Overstory can stay focused on orchestration while Trellis owns repo-local workflow documents.
@@ -35,6 +38,16 @@ Trellis complements existing tools:
 - it does not replace Mulch as the source of truth for expertise
 - it does not replace Canopy as the source of truth for prompts
 - it gives those tools a shared, repo-native place to point at richer workflow documents
+
+## Part Of os-eco
+
+Trellis is intended to sit alongside:
+
+- `seeds` for issue state
+- `mulch` for expertise
+- `canopy` for prompts
+- `sapling` for coding-runtime execution
+- `overstory` for orchestration
 
 ## Initial Scope
 
@@ -125,6 +138,18 @@ trellis inspect auth-refresh --json
 trellis audit blocked --json
 ```
 
+## Commands
+
+| Area | Commands |
+| --- | --- |
+| Project | `init`, `doctor`, `show`, `inspect`, `timeline` |
+| Specs | `spec create`, `spec show`, `spec update`, `spec start`, `spec complete`, `spec list` |
+| Plans | `plan create`, `plan show`, `plan update`, `plan start`, `plan block`, `plan resume`, `plan complete`, `plan list` |
+| Handoffs | `handoff append`, `handoff show`, `handoff latest`, `handoff list` |
+| Audit | `audit blocked`, `audit stale`, `audit orphaned`, `event list` |
+| Templates | `template init`, `template show`, `template placeholders`, `template render` |
+| Shell | `completions bash|zsh|fish` |
+
 ## Tooling
 
 This repo uses Bun, TypeScript, Commander, and Biome.
@@ -137,6 +162,19 @@ Local use:
 bun install
 bun link
 trellis --help
+```
+
+Global install:
+
+```bash
+bun install -g @os-eco/trellis-cli
+trellis --help
+```
+
+`npx` fallback:
+
+```bash
+npx @os-eco/trellis-cli --help
 ```
 
 Direct execution without linking:
@@ -171,6 +209,7 @@ Release expectations:
 - keep `--json` payloads backward-compatible per `docs/json-contract.md`
 - keep `.trellis/` storage backward-compatible per `docs/contract.md`
 - prefer additive changes over renames or removals
+- keep help/version/completion behavior aligned with `os-eco` CLI standards
 
 ## Transfer Intent
 

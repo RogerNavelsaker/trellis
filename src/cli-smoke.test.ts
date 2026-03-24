@@ -136,5 +136,15 @@ describe("trellis CLI smoke", () => {
 			(await run(["audit", "blocked", "--json"])).stdout,
 		);
 		expect(blocked.count).toBe(1);
+
+		const version = JSON.parse((await run(["--version", "--json"])).stdout);
+		expect(version.success).toBe(true);
+		expect(version.command).toBe("version");
+		expect(version.name).toBe("@os-eco/trellis-cli");
+
+		const bashCompletions = await run(["completions", "bash"]);
+		expect(bashCompletions.stdout).toContain(
+			"complete -F _trellis_completions",
+		);
 	});
 });

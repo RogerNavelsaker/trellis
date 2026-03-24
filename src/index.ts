@@ -33,6 +33,16 @@ function runtimeString(): string {
 }
 
 async function main(): Promise<void> {
+	if (shouldPrintVersionJson(process.argv.slice(2))) {
+		jsonOutput("version", {
+			name: packageName(),
+			version: VERSION,
+			runtime: runtimeString(),
+			platform,
+		});
+		return;
+	}
+
 	const program = new Command();
 
 	program
@@ -40,11 +50,16 @@ async function main(): Promise<void> {
 		.description(
 			"Git-native specs, plans, and handoff artifacts for the os-eco toolchain",
 		)
+		.showSuggestionAfterError()
 		.option("--json", "Machine-readable JSON output")
 		.option("--quiet, -q", "Suppress non-error output")
 		.option("--verbose", "Extra diagnostic output")
 		.option("--timing", "Print execution time to stderr")
 		.version(VERSION, "-v, --version", "Print version")
+		.addHelpText(
+			"before",
+			`trellis v${VERSION} — git-native specs, plans, and handoff artifacts\n`,
+		)
 		.addHelpText(
 			"after",
 			[
@@ -80,6 +95,24 @@ async function main(): Promise<void> {
 				}
 				console.error(chalk.red(message));
 				process.exitCode = 1;
+			}
+		});
+
+	program
+		.command("completions")
+		.argument("<shell>", "Shell name: bash, zsh, or fish")
+		.description("Print shell completion scripts")
+		.action((shell: string) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const script = completionScript(shell);
+				if (global.json) {
+					jsonOutput("completions", { shell, script });
+					return;
+				}
+				console.log(script);
+			} catch (error) {
+				handleCommandError("completions", error, global.json);
 			}
 		});
 
@@ -896,6 +929,14 @@ function collectValues(value: string, previous: string[]): string[] {
 	return [...previous, value];
 }
 
+function shouldPrintVersionJson(args: string[]): boolean {
+	return (
+		args.includes("--json") &&
+		(args.includes("--version") || args.includes("-v")) &&
+		!args.includes("version-json")
+	);
+}
+
 function parseInteger(value: string): number {
 	const parsed = Number.parseInt(value, 10);
 	if (!Number.isFinite(parsed) || parsed < 1)
@@ -912,6 +953,55 @@ function parseKeyValuePairs(values: string[]): Record<string, string> {
 			return [entry.slice(0, separator), entry.slice(separator + 1)];
 		}),
 	);
+}
+
+function completionScript(shell: string): string {
+	const commandWords = [
+		"init",
+		"doctor",
+		"completions",
+		"spec",
+		"plan",
+		"audit",
+		"handoff",
+		"event",
+		"template",
+		"show",
+		"inspect",
+		"timeline",
+		"version-json",
+	];
+
+	switch (shell) {
+		case "bash":
+			return [
+				"_trellis_completions() {",
+				`  local cur="\${COMP_WORDS[COMP_CWORD]}"`,
+				`  COMPREPLY=($(compgen -W "${commandWords.join(" ")}" -- "$cur"))`,
+				"}",
+				"complete -F _trellis_completions trellis tl",
+			].join("\n");
+		case "zsh":
+			return [
+				"#compdef trellis tl",
+				"_trellis() {",
+				`  local -a commands=(${commandWords.map((word) => `"${word}"`).join(" ")})`,
+				'  _describe "command" commands',
+				"}",
+				"compdef _trellis trellis tl",
+			].join("\n");
+		case "fish":
+			return commandWords
+				.map(
+					(word) =>
+						`complete -c trellis -f -a ${word}\ncomplete -c tl -f -a ${word}`,
+				)
+				.join("\n");
+		default:
+			throw new Error(
+				`unsupported shell '${shell}', expected bash, zsh, or fish`,
+			);
+	}
 }
 
 function hasExplicitArrayOption(values: string[] | undefined): boolean {

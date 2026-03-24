@@ -4,6 +4,22 @@
 	"description": "Git-native specs, plans, and handoff artifacts for the os-eco toolchain",
 	"license": "MIT",
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/RogerNavelsaker/trellis.git"
+	},
+	"homepage": "https://github.com/RogerNavelsaker/trellis#readme",
+	"bugs": {
+		"url": "https://github.com/RogerNavelsaker/trellis/issues"
+	},
+	"keywords": [
+		"os-eco",
+		"trellis",
+		"cli",
+		"git-native",
+		"workflow",
+		"planning"
+	],
 	"bin": {
 		"trellis": "src/index.ts",
 		"tl": "src/index.ts"
