@@ -3,6 +3,7 @@
 Git-native specs, plans, handoffs, and workflow audit history.
 
 [![npm](https://img.shields.io/npm/v/@os-eco/trellis-cli)](https://www.npmjs.com/package/@os-eco/trellis-cli)
+[![CI](https://github.com/RogerNavelsaker/trellis/actions/workflows/ci.yml/badge.svg)](https://github.com/RogerNavelsaker/trellis/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Trellis stores planning artifacts as plain YAML and JSONL files inside your repo. It is designed for the `os-eco` stack, but it works as a standalone CLI with no daemon or server.
@@ -82,7 +83,63 @@ Every command supports `--json` where noted. ANSI colors respect `NO_COLOR`.
 | Templates | `template init`, `template show`, `template placeholders`, `template render` |
 | Shell | `completions bash|zsh|fish` |
 
-## Storage
+## Architecture
+
+Trellis is a small Bun CLI with a file-backed workflow model:
+
+- `specs.ts` and `plans.ts` own YAML-backed workflow artifacts
+- `handoffs.ts` owns append-only JSONL handoff logs
+- `events.ts` owns the shared event log for transitions and handoffs
+- `transitions.ts` enforces lifecycle rules
+- `lock.ts` provides advisory write locking for concurrent updates
+- `validate.ts` and `yaml.ts` keep storage reads and writes consistent
+
+## How It Works
+
+Trellis keeps workflow state in the repo as plain files. Humans and agents create specs and plans, advance their lifecycle, append handoffs, and inspect the resulting audit trail through the CLI.
+
+```text
+seeds
+  -> declares work and issue state
+trellis
+  -> stores spec / plan / handoff / event artifacts
+overstory
+  -> bootstraps or references Trellis artifacts during orchestration
+sapling
+  -> consumes Trellis context during coding execution
+mulch
+  -> records durable lessons after the work completes
+canopy
+  -> can render prompt/template content that ends up in Trellis artifacts
+```
+
+## Project Structure
+
+```text
+trellis/
+  src/
+    index.ts            CLI entry point
+    specs.ts            Spec create/read/update/list
+    plans.ts            Plan create/read/update/list
+    handoffs.ts         Append-only handoff logs
+    events.ts           Event log helpers
+    transitions.ts      Lifecycle transition rules
+    lock.ts             Advisory file locking
+    validate.ts         Input and stored-data validation
+    render.ts           Template rendering
+    templates.ts        Template placeholder contracts
+    doctor.ts           Repo health checks
+    audit.ts            Blocked/stale/orphaned audits
+    yaml.ts             YAML parsing and serialization
+    json.ts             Standard JSON output envelope
+  docs/
+    contract.md         Storage contract
+    json-contract.md    Stable JSON response contract
+    lifecycle.md        Ecosystem lifecycle model
+    positioning.md      Responsibility boundary
+```
+
+## What's in `.trellis`
 
 Trellis keeps its state inside `.trellis/`:
 
@@ -107,12 +164,15 @@ See [docs/contract.md](docs/contract.md) for the storage contract and [docs/json
 
 Trellis is part of the `os-eco` toolchain, but it does not replace the other tools:
 
-- `seeds` owns issue state, readiness, and dependencies
-- `mulch` owns expertise and durable lessons
-- `canopy` owns prompts and prompt composition
-- `sapling` owns headless coding-runtime execution
-- `overstory` owns orchestration, worktrees, and coordination
-- `trellis` owns repo-local specs, plans, handoffs, and workflow audit history
+```text
+os-eco/
+  seeds      -> issue state, readiness, dependencies
+  mulch      -> expertise and durable lessons
+  canopy     -> prompts and prompt composition
+  sapling    -> headless coding-runtime execution
+  overstory  -> orchestration, worktrees, coordination
+  trellis    -> repo-local specs, plans, handoffs, audit history
+```
 
 That means Trellis can link to a Seeds issue with `seed: seed-123`, but it never becomes the issue tracker. It can store rendered templates, but it does not become the prompt system.
 
@@ -128,9 +188,18 @@ Trellis follows the same core principles as the rest of `os-eco`:
 - CLI-first: every operation is a shell command with `--json`
 - Consistent UX: shell completions, help screens, and flag conventions aligned with the stack
 
-## Integration
+## Concurrency & Multi-Agent Safety
 
-Trellis works standalone, but it is designed to compose cleanly with the rest of the ecosystem.
+Trellis is designed for concurrent human and agent use in the same repo:
+
+- writes go through advisory file locks
+- specs and plans are stored as individual YAML files to reduce merge pressure
+- handoffs and events are append-only JSONL where that model fits better
+- lifecycle transitions are explicit so tools can reason about blocked, active, and completed work safely
+
+## Integration with Overstory
+
+Trellis works standalone, but it is designed to compose cleanly with Overstory.
 
 Current downstream usage is:
 - humans can create and update specs and plans directly with `trellis`
