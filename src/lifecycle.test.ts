@@ -37,8 +37,17 @@ describe("Trellis lifecycle transitions", () => {
 		expect((await readSpec(tempDir, "spec-a")).status).toBe("active");
 		expect((await readEvents(tempDir)).at(-1)?.type).toBe("spec.transition");
 
-		await transitionSpec(tempDir, "spec-a", "done");
+		await expect(transitionSpec(tempDir, "spec-a", "done")).rejects.toThrow(
+			"completing a spec requires --summary",
+		);
+		await transitionSpec(tempDir, "spec-a", "done", {
+			summary: "Spec outcome recorded",
+		});
 		expect((await readSpec(tempDir, "spec-a")).status).toBe("done");
+		expect((await readSpec(tempDir, "spec-a")).completionSummary).toBe(
+			"Spec outcome recorded",
+		);
+		expect((await readSpec(tempDir, "spec-a")).completedAt).toBeTruthy();
 
 		await expect(transitionSpec(tempDir, "spec-a", "active")).rejects.toThrow(
 			"spec cannot transition from done to active",
@@ -87,12 +96,19 @@ describe("Trellis lifecycle transitions", () => {
 		).toBe(true);
 
 		await transitionPlan(tempDir, "plan-a", "active");
+		await expect(transitionPlan(tempDir, "plan-a", "done")).rejects.toThrow(
+			"completing a plan requires --summary",
+		);
 		await transitionPlan(tempDir, "plan-a", "done", {
-			reason: "Implementation merged",
+			summary: "Implementation merged",
 			actor: "reviewer",
 			to: "lead",
 		});
 		expect((await readPlan(tempDir, "plan-a")).status).toBe("done");
+		expect((await readPlan(tempDir, "plan-a")).completionSummary).toBe(
+			"Implementation merged",
+		);
+		expect((await readPlan(tempDir, "plan-a")).completedAt).toBeTruthy();
 	});
 
 	test("spec completion is blocked until linked plans are done", async () => {
@@ -119,7 +135,11 @@ describe("Trellis lifecycle transitions", () => {
 		});
 
 		await transitionSpec(tempDir, "spec-a", "active");
-		await expect(transitionSpec(tempDir, "spec-a", "done")).rejects.toThrow(
+		await expect(
+			transitionSpec(tempDir, "spec-a", "done", {
+				summary: "Attempted closure",
+			}),
+		).rejects.toThrow(
 			"spec 'spec-a' cannot complete until linked plans are done: plan-a",
 		);
 	});

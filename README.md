@@ -46,11 +46,12 @@ The first version focuses on:
 - `trellis spec start|complete`
 - `trellis plan create|show|list|update`
 - `trellis plan start|block|resume|complete`
-- `trellis handoff append|show`
-- `trellis handoff list`
+- `trellis handoff append|show|latest|list`
+- `trellis audit blocked|stale|orphaned`
+- `trellis event list`
 - `trellis template init|show`
 - `trellis template placeholders|render`
-- `trellis show` / `trellis inspect`
+- `trellis show` / `trellis inspect` / `trellis timeline`
 - a documented filesystem contract that Overstory can integrate against later
 
 Planned storage layout:
@@ -60,6 +61,7 @@ Planned storage layout:
   specs/
   plans/
   handoffs/
+  events.jsonl
   templates/
   locks/
   README.md
@@ -101,6 +103,14 @@ trellis plan block auth-refresh-v1 \
   --from lead \
   --to reviewer
 
+trellis plan complete auth-refresh-v1 \
+  --summary "Storage and CLI flow landed in main." \
+  --from reviewer \
+  --to lead
+
+trellis spec complete auth-refresh \
+  --summary "First auth refresh increment shipped with linked plan complete."
+
 trellis template render handoff \
   --data plan_id=auth-refresh-v1 \
   --data spec_id=auth-refresh \
@@ -111,6 +121,7 @@ trellis template render handoff \
   --data next_step_1="Open PR and request review"
 
 trellis inspect auth-refresh --json
+trellis audit blocked --json
 ```
 
 ## Tooling

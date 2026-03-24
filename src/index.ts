@@ -5,6 +5,7 @@ import { cwd, platform } from "node:process";
 import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import { Command } from "commander";
+import { auditBlocked, auditOrphaned, auditStale } from "./audit.ts";
 import { doctorProject } from "./doctor.ts";
 import { readEvents } from "./events.ts";
 import { appendHandoff, readHandoffs } from "./handoffs.ts";
@@ -227,11 +228,17 @@ async function main(): Promise<void> {
 	spec
 		.command("complete")
 		.argument("<id>", "Spec identifier")
+		.requiredOption(
+			"--summary <text>",
+			"Outcome summary for the completed spec",
+		)
 		.description("Transition a spec from active to done")
-		.action(async (id: string) => {
+		.action(async (id: string, opts) => {
 			const global = program.opts<{ json?: boolean }>();
 			try {
-				const spec = await transitionSpec(cwd(), id, "done");
+				const spec = await transitionSpec(cwd(), id, "done", {
+					summary: opts.summary,
+				});
 				if (global.json) {
 					jsonOutput("spec complete", { spec });
 					return;
@@ -409,7 +416,10 @@ async function main(): Promise<void> {
 	plan
 		.command("complete")
 		.argument("<id>", "Plan identifier")
-		.option("--reason <text>", "Completion note")
+		.requiredOption(
+			"--summary <text>",
+			"Outcome summary for the completed plan",
+		)
 		.option("--from <name>", "Actor recording completion")
 		.option("--to <name>", "Optional recipient for completion handoff")
 		.description("Transition a plan into done")
@@ -417,7 +427,7 @@ async function main(): Promise<void> {
 			const global = program.opts<{ json?: boolean }>();
 			try {
 				const plan = await transitionPlan(cwd(), id, "done", {
-					reason: opts.reason,
+					summary: opts.summary,
 					actor: opts.from,
 					to: opts.to,
 				});
@@ -428,6 +438,93 @@ async function main(): Promise<void> {
 				console.log(chalk.green(`Completed plan ${plan.id}`));
 			} catch (error) {
 				handleCommandError("plan complete", error, global.json);
+			}
+		});
+
+	const audit = program
+		.command("audit")
+		.description("Audit Trellis artifact health and lifecycle quality");
+	audit
+		.command("blocked")
+		.description("List blocked plans with their latest block reason")
+		.action(async () => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const blocked = await auditBlocked(cwd());
+				if (global.json) {
+					jsonOutput("audit blocked", { blocked, count: blocked.length });
+					return;
+				}
+				for (const entry of blocked) {
+					const reason = entry.latestBlockReason
+						? ` reason=${entry.latestBlockReason}`
+						: "";
+					const since = entry.blockedAt ? ` blockedAt=${entry.blockedAt}` : "";
+					console.log(
+						`${chalk.yellow(entry.plan.id)} spec=${entry.plan.spec ?? "-"}${since}${reason}`,
+					);
+				}
+			} catch (error) {
+				handleCommandError("audit blocked", error, global.json);
+			}
+		});
+	audit
+		.command("stale")
+		.option("--days <count>", "Minimum age in days", parseInteger, 7)
+		.description("List active or blocked artifacts with no recent activity")
+		.action(async (opts: { days: number }) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const stale = await auditStale(cwd(), opts.days);
+				if (global.json) {
+					jsonOutput("audit stale", {
+						stale,
+						count: stale.length,
+						days: opts.days,
+					});
+					return;
+				}
+				for (const entry of stale) {
+					const link = entry.spec ? ` spec=${entry.spec}` : "";
+					const seed = entry.seed ? ` seed=${entry.seed}` : "";
+					console.log(
+						`${chalk.yellow(`${entry.kind}:${entry.id}`)} [${entry.status}] stale=${entry.staleDays}d last=${entry.lastActivityAt}${seed}${link}`,
+					);
+				}
+			} catch (error) {
+				handleCommandError("audit stale", error, global.json);
+			}
+		});
+	audit
+		.command("orphaned")
+		.description("List specs, plans, and handoffs with broken linkage")
+		.action(async () => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const orphaned = await auditOrphaned(cwd());
+				if (global.json) {
+					jsonOutput("audit orphaned", {
+						specsWithoutPlans: orphaned.specsWithoutPlans,
+						plansWithMissingSpecs: orphaned.plansWithMissingSpecs,
+						handoffsForMissingPlans: orphaned.handoffsForMissingPlans,
+					});
+					return;
+				}
+				for (const spec of orphaned.specsWithoutPlans) {
+					console.log(`${chalk.yellow(`spec:${spec.id}`)} no linked plans`);
+				}
+				for (const plan of orphaned.plansWithMissingSpecs) {
+					console.log(
+						`${chalk.yellow(`plan:${plan.id}`)} missing spec=${plan.spec}`,
+					);
+				}
+				for (const handoff of orphaned.handoffsForMissingPlans) {
+					console.log(
+						`${chalk.yellow(`handoff:${handoff.plan}`)} missing plan entries=${handoff.count}`,
+					);
+				}
+			} catch (error) {
+				handleCommandError("audit orphaned", error, global.json);
 			}
 		});
 	plan
@@ -775,7 +872,7 @@ async function main(): Promise<void> {
 					jsonOutput("timeline", payload);
 					return;
 				}
-				console.log(serializeForDisplay(payload));
+				console.log(formatTimelineForDisplay(payload));
 			} catch (error) {
 				handleCommandError("timeline", error, global.json);
 			}
@@ -823,6 +920,53 @@ function hasExplicitArrayOption(values: string[] | undefined): boolean {
 
 function serializeForDisplay(record: unknown): string {
 	return JSON.stringify(record, null, 2);
+}
+
+function formatTimelineForDisplay(
+	record: Awaited<ReturnType<typeof resolveArtifact>> & {
+		events: Awaited<ReturnType<typeof readEvents>>;
+		handoffs: Awaited<ReturnType<typeof readHandoffs>>;
+	},
+): string {
+	const header =
+		record.kind === "spec"
+			? `spec ${record.spec.id} [${record.spec.status}] ${record.spec.title}`
+			: `plan ${record.plan.id} [${record.plan.status}] ${record.plan.title}`;
+	const lines = [header];
+	if (record.kind === "spec") {
+		lines.push(`linked plans: ${record.linkedPlans.length}`);
+		if (record.spec.completionSummary) {
+			lines.push(`completion: ${record.spec.completionSummary}`);
+		}
+	} else {
+		lines.push(`linked spec: ${record.linkedSpec?.id ?? "-"}`);
+		if (record.plan.completionSummary) {
+			lines.push(`completion: ${record.plan.completionSummary}`);
+		}
+	}
+	lines.push("");
+	lines.push("events:");
+	for (const event of [...record.events].sort((a, b) =>
+		a.timestamp.localeCompare(b.timestamp),
+	)) {
+		lines.push(formatEventLine(event));
+	}
+	if (record.events.length === 0) lines.push("(none)");
+	return lines.join("\n");
+}
+
+function formatEventLine(
+	event: Awaited<ReturnType<typeof readEvents>>[number],
+): string {
+	switch (event.type) {
+		case "spec.transition":
+		case "plan.transition": {
+			const summary = event.summary ? ` summary=${event.summary}` : "";
+			return `- ${event.timestamp} ${event.artifactKind}:${event.artifactId} ${event.fromStatus ?? "?"} -> ${event.toStatus ?? "?"}${summary}`;
+		}
+		case "handoff.append":
+			return `- ${event.timestamp} handoff ${event.plan ?? event.artifactId} ${event.from ?? "?"} -> ${event.to ?? "?"}: ${event.summary ?? ""}`;
+	}
 }
 
 function formatSpecSummary(

@@ -5,6 +5,8 @@ export interface SpecRecord {
 	status: "draft" | "active" | "done";
 	createdAt: string;
 	updatedAt: string;
+	completedAt?: string;
+	completionSummary?: string;
 	objective: string;
 	constraints: string[];
 	acceptance: string[];
@@ -19,6 +21,8 @@ export interface PlanRecord {
 	status: "draft" | "active" | "blocked" | "done";
 	createdAt: string;
 	updatedAt: string;
+	completedAt?: string;
+	completionSummary?: string;
 	summary: string;
 	steps: string[];
 }

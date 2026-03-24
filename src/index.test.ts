@@ -3,7 +3,12 @@ import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { doctorProject } from "./doctor.ts";
-import { initProject, TRELLIS_GITIGNORE, TRELLIS_README } from "./init.ts";
+import {
+	initProject,
+	TRELLIS_EVENTS,
+	TRELLIS_GITIGNORE,
+	TRELLIS_README,
+} from "./init.ts";
 
 describe("initProject", () => {
 	let tempDir: string | undefined;
@@ -38,6 +43,9 @@ describe("initProject", () => {
 		expect(
 			(await stat(join(tempDir, ".trellis", "templates"))).isDirectory(),
 		).toBe(true);
+		expect(
+			await Bun.file(join(tempDir, ".trellis", TRELLIS_EVENTS)).text(),
+		).toBe("");
 	});
 });
 

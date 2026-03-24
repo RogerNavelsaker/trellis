@@ -18,6 +18,7 @@ It stores three artifact classes:
     <plan-id>.yaml
   handoffs/
     <plan-id>.jsonl
+  events.jsonl
   templates/
   locks/
   README.md
@@ -46,6 +47,8 @@ Fields:
 - `status`
 - `createdAt`
 - `updatedAt`
+- `completedAt` optional
+- `completionSummary` optional until the spec reaches `done`
 - `objective`
 - `constraints`
 - `acceptance`
@@ -64,6 +67,8 @@ Fields:
 - `status`
 - `createdAt`
 - `updatedAt`
+- `completedAt` optional
+- `completionSummary` optional until the plan reaches `done`
 - `summary`
 - `steps`
 
@@ -81,6 +86,25 @@ Each line is a JSON object with:
 - `spec` optional
 - `seed` optional
 
+## Event Schema
+
+File: `.trellis/events.jsonl`
+
+Each line is a JSON object with:
+
+- `timestamp`
+- `type`: `spec.transition` | `plan.transition` | `handoff.append`
+- `artifactKind`
+- `artifactId`
+- `fromStatus` optional
+- `toStatus` optional
+- `from` optional
+- `to` optional
+- `summary` optional
+- `spec` optional
+- `seed` optional
+- `plan` optional
+
 ## Initial Command Surface
 
 - `trellis init`
@@ -90,18 +114,24 @@ Each line is a JSON object with:
 - `trellis plan create|show|list|update`
 - `trellis plan start|block|resume|complete`
 - `trellis handoff append|show`
-- `trellis handoff list`
+- `trellis handoff latest|list`
+- `trellis audit blocked|stale|orphaned`
+- `trellis event list`
 - `trellis template init|show`
 - `trellis template placeholders|render`
 - `trellis show`
 - `trellis inspect`
+- `trellis timeline`
 
 ## Lifecycle Rules
 
 - spec: `draft -> active -> done`
 - plan: `draft -> active|blocked`, `active -> blocked|done`, `blocked -> active|done`
 - blocking a plan requires a reason
-- blocking or completing a plan can also record a durable handoff when `from`, `to`, and `reason` are provided
+- completing a spec requires a completion summary and all linked plans to be `done`
+- completing a plan requires a completion summary
+- blocking or completing a plan can also record a durable handoff when `from`, `to`, and the relevant summary/reason are provided
+- all transitions and handoff appends are recorded in `.trellis/events.jsonl`
 
 ## Follow-up Overstory Integration Target
 

@@ -27,6 +27,8 @@ export function serializePlan(record: PlanRecord): string {
 		status: record.status,
 		createdAt: record.createdAt,
 		updatedAt: record.updatedAt,
+		completedAt: record.completedAt,
+		completionSummary: record.completionSummary,
 		summary: record.summary,
 		steps: record.steps,
 	});
@@ -44,6 +46,10 @@ export function parsePlan(text: string): PlanRecord {
 			: "draft") as PlanRecord["status"],
 		createdAt: String(parsed.createdAt ?? ""),
 		updatedAt: String(parsed.updatedAt ?? ""),
+		completedAt: parsed.completedAt ? String(parsed.completedAt) : undefined,
+		completionSummary: parsed.completionSummary
+			? String(parsed.completionSummary)
+			: undefined,
 		summary: String(parsed.summary ?? ""),
 		steps: Array.isArray(parsed.steps) ? parsed.steps : [],
 	};
@@ -91,13 +97,30 @@ export async function updatePlan(
 	root: string,
 	id: string,
 	patch: Partial<
-		Pick<PlanRecord, "title" | "seed" | "spec" | "status" | "summary" | "steps">
+		Pick<
+			PlanRecord,
+			| "title"
+			| "seed"
+			| "spec"
+			| "status"
+			| "completedAt"
+			| "completionSummary"
+			| "summary"
+			| "steps"
+		>
 	>,
 ): Promise<PlanRecord> {
 	validatePlanStatus(patch.status);
 	validateSeed(patch.seed);
 	if (patch.title !== undefined && !patch.title.trim())
 		throw new Error("title must not be empty");
+	if (
+		patch.completionSummary !== undefined &&
+		patch.completionSummary !== null &&
+		!patch.completionSummary.trim()
+	) {
+		throw new Error("completionSummary must not be empty");
+	}
 	if (patch.spec) {
 		await readSpec(root, patch.spec).catch(() => {
 			throw new Error(`linked spec '${patch.spec}' does not exist`);

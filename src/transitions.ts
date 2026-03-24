@@ -32,10 +32,14 @@ export async function transitionSpec(
 	root: string,
 	id: string,
 	status: "active" | "done",
+	options: { summary?: string } = {},
 ) {
 	const current = await readSpec(root, id);
 	ensureTransition("spec", current.status, status, SPEC_TRANSITIONS);
 	if (status === "done") {
+		if (!options.summary?.trim()) {
+			throw new Error("completing a spec requires --summary");
+		}
 		const linkedPlans = await listPlans(root, { spec: id });
 		const incomplete = linkedPlans.filter((plan) => plan.status !== "done");
 		if (incomplete.length > 0) {
@@ -44,7 +48,11 @@ export async function transitionSpec(
 			);
 		}
 	}
-	const updated = await updateSpec(root, id, { status });
+	const updated = await updateSpec(root, id, {
+		status,
+		completedAt: status === "done" ? new Date().toISOString() : undefined,
+		completionSummary: status === "done" ? options.summary?.trim() : undefined,
+	});
 	await appendEvent(root, {
 		timestamp: updated.updatedAt,
 		type: "spec.transition",
@@ -52,6 +60,7 @@ export async function transitionSpec(
 		artifactId: updated.id,
 		fromStatus: current.status,
 		toStatus: updated.status,
+		summary: updated.completionSummary,
 		seed: updated.seed,
 	});
 	return updated;
@@ -61,14 +70,26 @@ export async function transitionPlan(
 	root: string,
 	id: string,
 	status: "active" | "blocked" | "done",
-	options: { reason?: string; actor?: string; to?: string } = {},
+	options: {
+		reason?: string;
+		summary?: string;
+		actor?: string;
+		to?: string;
+	} = {},
 ) {
 	const current = await readPlan(root, id);
 	ensureTransition("plan", current.status, status, PLAN_TRANSITIONS);
 	if (status === "blocked" && !options.reason?.trim()) {
 		throw new Error("blocking a plan requires --reason");
 	}
-	const updated = await updatePlan(root, id, { status });
+	if (status === "done" && !options.summary?.trim()) {
+		throw new Error("completing a plan requires --summary");
+	}
+	const updated = await updatePlan(root, id, {
+		status,
+		completedAt: status === "done" ? new Date().toISOString() : undefined,
+		completionSummary: status === "done" ? options.summary?.trim() : undefined,
+	});
 	await appendEvent(root, {
 		timestamp: updated.updatedAt,
 		type: "plan.transition",
@@ -79,7 +100,7 @@ export async function transitionPlan(
 		spec: updated.spec,
 		seed: updated.seed,
 		plan: updated.id,
-		summary: options.reason,
+		summary: options.summary ?? options.reason,
 	});
 	if (options.reason && options.actor && options.to) {
 		await appendHandoff(root, {

@@ -25,6 +25,8 @@ export function serializeSpec(record: SpecRecord): string {
 		status: record.status,
 		createdAt: record.createdAt,
 		updatedAt: record.updatedAt,
+		completedAt: record.completedAt,
+		completionSummary: record.completionSummary,
 		objective: record.objective,
 		constraints: record.constraints,
 		acceptance: record.acceptance,
@@ -43,6 +45,10 @@ export function parseSpec(text: string): SpecRecord {
 			: "draft") as SpecRecord["status"],
 		createdAt: String(parsed.createdAt ?? ""),
 		updatedAt: String(parsed.updatedAt ?? ""),
+		completedAt: parsed.completedAt ? String(parsed.completedAt) : undefined,
+		completionSummary: parsed.completionSummary
+			? String(parsed.completionSummary)
+			: undefined,
 		objective: String(parsed.objective ?? ""),
 		constraints: Array.isArray(parsed.constraints) ? parsed.constraints : [],
 		acceptance: Array.isArray(parsed.acceptance) ? parsed.acceptance : [],
@@ -91,6 +97,8 @@ export async function updateSpec(
 			| "title"
 			| "seed"
 			| "status"
+			| "completedAt"
+			| "completionSummary"
 			| "objective"
 			| "constraints"
 			| "acceptance"
@@ -104,6 +112,13 @@ export async function updateSpec(
 		throw new Error("title must not be empty");
 	if (patch.objective !== undefined && !patch.objective.trim()) {
 		throw new Error("objective must not be empty");
+	}
+	if (
+		patch.completionSummary !== undefined &&
+		patch.completionSummary !== null &&
+		!patch.completionSummary.trim()
+	) {
+		throw new Error("completionSummary must not be empty");
 	}
 	return withWriteLock(root, "specs", async () => {
 		const current = await readSpec(root, id);

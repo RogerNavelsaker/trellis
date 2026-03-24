@@ -42,6 +42,14 @@ The explicit lifecycle is:
 - spec: `draft -> active -> done`
 - plan: `draft -> active|blocked`, `active -> blocked|done`, `blocked -> active|done`
 
+Closure rules are explicit:
+
+- a spec cannot complete until every linked plan is `done`
+- `spec complete` requires a durable completion summary
+- `plan complete` requires a durable completion summary
+- blocked plans require a reason
+- transitions and handoffs are recorded in `.trellis/events.jsonl` for auditability
+
 That matters because Trellis is not just storing files anymore. It is expressing workflow state transitions that Overstory can later target directly.
 
 ## 4. Canopy can supply document templates
@@ -115,6 +123,6 @@ That boundary matters: Trellis stores the workflow history, Mulch stores the reu
 3. Trellis creates a plan that links the issue and spec.
 4. Overstory or a human starts the plan.
 5. Handoffs accumulate as the work changes owners or phases.
-6. The plan completes when the execution path is done.
-7. The spec completes when the intended change is fully satisfied.
+6. The plan completes with a durable outcome summary when the execution path is done.
+7. The spec completes with a durable outcome summary once all linked plans are done and the intended change is fully satisfied.
 8. Mulch captures the reusable lessons after the work is complete.

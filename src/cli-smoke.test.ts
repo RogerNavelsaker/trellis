@@ -94,6 +94,24 @@ describe("trellis CLI smoke", () => {
 				).stdout,
 			).success,
 		).toBe(true);
+		expect(
+			JSON.parse(
+				(
+					await run([
+						"plan",
+						"block",
+						"plan-a",
+						"--reason",
+						"Waiting on review",
+						"--from",
+						"lead",
+						"--to",
+						"reviewer",
+						"--json",
+					])
+				).stdout,
+			).success,
+		).toBe(true);
 
 		const show = JSON.parse((await run(["show", "plan-a", "--json"])).stdout);
 		expect(show.kind).toBe("plan");
@@ -102,16 +120,21 @@ describe("trellis CLI smoke", () => {
 			(await run(["inspect", "spec-a", "--json"])).stdout,
 		);
 		expect(inspect.kind).toBe("spec");
-		expect(inspect.handoffCount).toBe(1);
+		expect(inspect.handoffCount).toBe(2);
 
 		const latest = JSON.parse(
 			(await run(["handoff", "latest", "plan-a", "--json"])).stdout,
 		);
-		expect(latest.handoff.summary).toBe("Do the work");
+		expect(latest.handoff.summary).toBe("Waiting on review");
 
 		const timeline = JSON.parse(
 			(await run(["timeline", "plan-a", "--json"])).stdout,
 		);
 		expect(Array.isArray(timeline.events)).toBe(true);
+
+		const blocked = JSON.parse(
+			(await run(["audit", "blocked", "--json"])).stdout,
+		);
+		expect(blocked.count).toBe(1);
 	});
 });
