@@ -159,6 +159,17 @@ Release expectations:
 - prefer additive changes over renames or removals
 - keep help, version, and completion behavior aligned with the `os-eco` CLI style
 
+## Part of os-eco
+
+Trellis is intended to live alongside the rest of the `os-eco` toolchain:
+
+- `seeds` for issue state
+- `mulch` for expertise
+- `canopy` for prompts
+- `sapling` for coding-runtime execution
+- `overstory` for orchestration
+- `trellis` for repo-local specs, plans, handoffs, and workflow audit history
+
 ## Transfer Intent
 
 Trellis is being incubated under `RogerNavelsaker/trellis` with the intent to transfer it into the `os-eco` umbrella once the direction and ownership path are confirmed.
