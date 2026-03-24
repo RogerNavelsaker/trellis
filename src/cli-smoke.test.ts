@@ -103,5 +103,15 @@ describe("trellis CLI smoke", () => {
 		);
 		expect(inspect.kind).toBe("spec");
 		expect(inspect.handoffCount).toBe(1);
+
+		const latest = JSON.parse(
+			(await run(["handoff", "latest", "plan-a", "--json"])).stdout,
+		);
+		expect(latest.handoff.summary).toBe("Do the work");
+
+		const timeline = JSON.parse(
+			(await run(["timeline", "plan-a", "--json"])).stdout,
+		);
+		expect(Array.isArray(timeline.events)).toBe(true);
 	});
 });

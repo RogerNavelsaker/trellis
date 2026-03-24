@@ -1,5 +1,6 @@
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { appendEvent } from "./events.ts";
 import { TRELLIS_DIR } from "./init.ts";
 import { withWriteLock } from "./lock.ts";
 import type { HandoffRecord } from "./types.ts";
@@ -26,6 +27,18 @@ export async function appendHandoff(
 			`${JSON.stringify(record)}\n`,
 			"utf8",
 		);
+	});
+	await appendEvent(root, {
+		timestamp: record.timestamp,
+		type: "handoff.append",
+		artifactKind: "handoff",
+		artifactId: record.plan,
+		from: record.from,
+		to: record.to,
+		summary: record.summary,
+		spec: record.spec,
+		seed: record.seed,
+		plan: record.plan,
 	});
 
 	return record;

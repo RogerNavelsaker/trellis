@@ -1,6 +1,6 @@
 import { access } from "node:fs/promises";
 import { join } from "node:path";
-import { TRELLIS_DIR } from "./init.ts";
+import { TRELLIS_DIR, TRELLIS_EVENTS } from "./init.ts";
 
 export interface DoctorCheck {
 	name: string;
@@ -17,6 +17,7 @@ export async function doctorProject(root: string): Promise<DoctorCheck[]> {
 		`${TRELLIS_DIR}/handoffs`,
 		`${TRELLIS_DIR}/templates`,
 		`${TRELLIS_DIR}/locks`,
+		`${TRELLIS_DIR}/${TRELLIS_EVENTS}`,
 	];
 
 	return Promise.all(

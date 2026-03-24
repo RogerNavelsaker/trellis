@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import chalk from "chalk";
 import { Command } from "commander";
 import { doctorProject } from "./doctor.ts";
+import { readEvents } from "./events.ts";
 import { appendHandoff, readHandoffs } from "./handoffs.ts";
 import { initProject } from "./init.ts";
 import { jsonError, jsonOutput } from "./json.ts";
@@ -526,6 +527,29 @@ async function main(): Promise<void> {
 			},
 		);
 	handoff
+		.command("latest")
+		.argument("<plan>", "Plan identifier")
+		.description("Show the latest durable handoff for a plan")
+		.action(async (planId: string) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const latest = (await readHandoffs(cwd(), planId)).at(-1) ?? null;
+				if (global.json) {
+					jsonOutput("handoff latest", { plan: planId, handoff: latest });
+					return;
+				}
+				if (!latest) {
+					console.log(`No handoffs for ${planId}`);
+					return;
+				}
+				console.log(
+					`${chalk.cyan(latest.timestamp)} ${latest.from} -> ${latest.to}: ${latest.summary}`,
+				);
+			} catch (error) {
+				handleCommandError("handoff latest", error, global.json);
+			}
+		});
+	handoff
 		.command("list")
 		.option("--plan <id>", "Filter by plan ID")
 		.option("--from <name>", "Filter by sender")
@@ -563,6 +587,41 @@ async function main(): Promise<void> {
 				}
 			} catch (error) {
 				handleCommandError("handoff list", error, global.json);
+			}
+		});
+
+	const event = program
+		.command("event")
+		.description("Query Trellis event history");
+	event
+		.command("list")
+		.option("--kind <kind>", "Filter by artifact kind")
+		.option("--type <type>", "Filter by event type")
+		.option("--artifact <id>", "Filter by artifact ID")
+		.option("--limit <count>", "Limit results", parseInteger)
+		.action(async (opts) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const records = (await readEvents(cwd()))
+					.filter((record) =>
+						opts.kind ? record.artifactKind === opts.kind : true,
+					)
+					.filter((record) => (opts.type ? record.type === opts.type : true))
+					.filter((record) =>
+						opts.artifact ? record.artifactId === opts.artifact : true,
+					)
+					.slice(opts.limit ? -opts.limit : undefined);
+				if (global.json) {
+					jsonOutput("event list", { events: records, count: records.length });
+					return;
+				}
+				for (const record of records) {
+					console.log(
+						`${chalk.cyan(record.timestamp)} ${record.type} ${record.artifactKind}:${record.artifactId}`,
+					);
+				}
+			} catch (error) {
+				handleCommandError("event list", error, global.json);
 			}
 		});
 
@@ -689,6 +748,36 @@ async function main(): Promise<void> {
 				console.log(serializeForDisplay(payload));
 			} catch (error) {
 				handleCommandError("inspect", error, global.json);
+			}
+		});
+	program
+		.command("timeline")
+		.argument("<id>", "Spec or plan identifier")
+		.description("Show lifecycle events and handoffs for a Trellis artifact")
+		.action(async (id: string) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const resolved = await resolveArtifact(cwd(), id);
+				const events = (await readEvents(cwd())).filter((event) => {
+					if (resolved.kind === "plan")
+						return event.artifactId === resolved.plan.id;
+					return (
+						event.artifactId === resolved.spec.id ||
+						event.spec === resolved.spec.id
+					);
+				});
+				const handoffs =
+					resolved.kind === "plan"
+						? await readHandoffs(cwd(), resolved.plan.id)
+						: await readLinkedPlanHandoffs(cwd(), resolved.spec.id);
+				const payload = { ...resolved, events, handoffs };
+				if (global.json) {
+					jsonOutput("timeline", payload);
+					return;
+				}
+				console.log(serializeForDisplay(payload));
+			} catch (error) {
+				handleCommandError("timeline", error, global.json);
 			}
 		});
 

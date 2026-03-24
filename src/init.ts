@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export const TRELLIS_DIR = ".trellis";
+export const TRELLIS_EVENTS = "events.jsonl";
 export const TRELLIS_GITIGNORE = `*
 !README.md
 !.gitignore
@@ -29,4 +30,5 @@ export async function initProject(root: string): Promise<void> {
 	await mkdir(join(trellisDir, "locks"), { recursive: true });
 	await writeFile(join(trellisDir, ".gitignore"), TRELLIS_GITIGNORE, "utf8");
 	await writeFile(join(trellisDir, "README.md"), TRELLIS_README, "utf8");
+	await writeFile(join(trellisDir, TRELLIS_EVENTS), "", "utf8");
 }

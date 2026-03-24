@@ -32,3 +32,18 @@ export interface HandoffRecord {
 	spec?: string;
 	seed?: string;
 }
+
+export interface EventRecord {
+	timestamp: string;
+	type: "spec.transition" | "plan.transition" | "handoff.append";
+	artifactKind: "spec" | "plan" | "handoff";
+	artifactId: string;
+	fromStatus?: string;
+	toStatus?: string;
+	from?: string;
+	to?: string;
+	summary?: string;
+	spec?: string;
+	seed?: string;
+	plan?: string;
+}
