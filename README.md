@@ -138,17 +138,17 @@ Trellis keeps its state inside `.trellis/`:
 
 ```text
 .trellis/
-  specs/
-    <spec-id>.yaml        # one YAML file per spec
-  plans/
-    <plan-id>.yaml        # one YAML file per plan
-  handoffs/
-    <plan-id>.jsonl       # append-only JSONL log per plan
-  events.jsonl            # shared transition + handoff event log
-  templates/              # repo-local document templates
-  locks/                  # advisory lock files
-  README.md               # local usage note
-  .gitignore              # keep runtime files out of version control
+├── specs/
+│   └── <spec-id>.yaml     # one YAML file per spec
+├── plans/
+│   └── <plan-id>.yaml     # one YAML file per plan
+├── handoffs/
+│   └── <plan-id>.jsonl    # append-only JSONL log per plan
+├── events.jsonl           # shared transition + handoff event log
+├── templates/             # repo-local document templates
+├── locks/                 # advisory lock files
+├── README.md              # local usage note
+└── .gitignore             # keep runtime files out of version control
 ```
 
 See [docs/contract.md](docs/contract.md) for the storage contract and [docs/json-contract.md](docs/json-contract.md) for stable `--json` output.
