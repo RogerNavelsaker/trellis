@@ -161,15 +161,20 @@ Release expectations:
 
 ## Part of os-eco
 
-Trellis is intended to live alongside the rest of the `os-eco` toolchain:
+Trellis is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent tooling ecosystem.
 
-- `seeds` for issue state
-- `mulch` for expertise
-- `canopy` for prompts
-- `sapling` for coding-runtime execution
-- `overstory` for orchestration
-- `trellis` for repo-local specs, plans, handoffs, and workflow audit history
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jayminwest/os-eco/main/branding/logo.png" alt="os-eco" width="444" />
+</p>
+
+## Contributing
+
+Contributions are welcome!
 
 ## Transfer Intent
 
 Trellis is being incubated under `RogerNavelsaker/trellis` with the intent to transfer it into the `os-eco` umbrella once the direction and ownership path are confirmed.
+
+## License
+
+MIT
