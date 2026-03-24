@@ -36,7 +36,7 @@ npx @os-eco/trellis-cli --help
 git clone https://github.com/RogerNavelsaker/trellis.git
 cd trellis
 bun install
-bun link              # Makes 'trellis' and 'tl' available globally
+bun link              # Makes 'tl' and 'trellis' available globally
 
 bun test
 bun run lint
@@ -47,16 +47,16 @@ bun run typecheck
 
 ```bash
 cd your-project
-trellis init
+tl init
 
-trellis spec create auth-refresh \
+tl spec create auth-refresh \
   --title "Refresh token redesign" \
   --seed seed-123 \
   --objective "Move auth to short-lived access tokens with explicit refresh flow." \
   --constraint "No new daemon" \
   --acceptance "CLI login flow remains backward compatible"
 
-trellis plan create auth-refresh-v1 \
+tl plan create auth-refresh-v1 \
   --title "Ship the first auth increment" \
   --seed seed-123 \
   --spec auth-refresh \
@@ -64,9 +64,9 @@ trellis plan create auth-refresh-v1 \
   --step "Define on-disk token format" \
   --step "Wire refresh into CLI flow"
 
-trellis plan start auth-refresh-v1
-trellis handoff append auth-refresh-v1 --from lead --to builder --summary "Implement storage and CLI changes."
-trellis timeline auth-refresh-v1
+tl plan start auth-refresh-v1
+tl handoff append auth-refresh-v1 --from lead --to builder --summary "Implement storage and CLI changes."
+tl timeline auth-refresh-v1
 ```
 
 ## Commands
@@ -99,11 +99,11 @@ Trellis is a small Bun CLI with a file-backed workflow model:
 Trellis keeps workflow state in the repo as plain files. Humans and agents create specs and plans, advance their lifecycle, append handoffs, and inspect the resulting audit trail through the CLI.
 
 ```text
-1. trellis init           -> creates .trellis/ in your repo
-2. trellis spec create    -> writes durable intent, constraints, and references
-3. trellis plan create    -> captures an execution path for the spec
-4. trellis handoff append -> records ownership/context transfer
-5. trellis timeline       -> reads back lifecycle and audit history
+1. tl init           -> creates .trellis/ in your repo
+2. tl spec create    -> writes durable intent, constraints, and references
+3. tl plan create    -> captures an execution path for the spec
+4. tl handoff append -> records ownership/context transfer
+5. tl timeline       -> reads back lifecycle and audit history
 ```
 
 ## Project Structure
@@ -194,7 +194,7 @@ Trellis is designed for concurrent human and agent use in the same repo:
 Trellis works standalone, but it is designed to compose cleanly with Overstory.
 
 Current downstream usage is:
-- humans can create and update specs and plans directly with `trellis`
+- humans can create and update specs and plans directly with `tl`
 - Overstory can bootstrap co-creation specs into `.trellis/specs/`
 - Trellis remains the ongoing edit path for richer planning state
 
