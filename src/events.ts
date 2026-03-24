@@ -26,5 +26,12 @@ export async function readEvents(root: string): Promise<EventRecord[]> {
 	return text
 		.split("\n")
 		.filter(Boolean)
-		.map((line) => JSON.parse(line) as EventRecord);
+		.map((line, index) => {
+			try {
+				return JSON.parse(line) as EventRecord;
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				throw new Error(`corrupt event log at line ${index + 1}: ${message}`);
+			}
+		});
 }

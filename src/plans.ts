@@ -9,6 +9,7 @@ import {
 	validatePlanInput,
 	validatePlanStatus,
 	validateSeed,
+	validateStoredPlan,
 } from "./validate.ts";
 import { parseYaml, serializeYaml } from "./yaml.ts";
 
@@ -36,7 +37,7 @@ export function serializePlan(record: PlanRecord): string {
 
 export function parsePlan(text: string): PlanRecord {
 	const parsed = parseYaml(text);
-	return {
+	const record: PlanRecord = {
 		id: String(parsed.id ?? ""),
 		title: String(parsed.title ?? ""),
 		seed: parsed.seed ? String(parsed.seed) : undefined,
@@ -53,6 +54,8 @@ export function parsePlan(text: string): PlanRecord {
 		summary: String(parsed.summary ?? ""),
 		steps: Array.isArray(parsed.steps) ? parsed.steps : [],
 	};
+	validateStoredPlan(record);
+	return record;
 }
 
 export async function createPlan(
@@ -90,7 +93,12 @@ export interface PlanFilters {
 }
 
 export async function readPlan(root: string, id: string): Promise<PlanRecord> {
-	return parsePlan(await readFile(planPath(root, id), "utf8"));
+	try {
+		return parsePlan(await readFile(planPath(root, id), "utf8"));
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`corrupt plan '${id}': ${message}`);
+	}
 }
 
 export async function updatePlan(

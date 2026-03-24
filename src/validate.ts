@@ -60,3 +60,32 @@ export function validatePlanStatus(status: string | undefined): void {
 		throw new Error(`plan status must be one of: draft, active, blocked, done`);
 	}
 }
+
+export function validateStoredSpec(record: SpecRecord): void {
+	validateSpecInput({
+		id: record.id,
+		title: record.title,
+		seed: record.seed,
+		status: record.status,
+		objective: record.objective,
+		constraints: record.constraints,
+		acceptance: record.acceptance,
+		references: record.references,
+		completedAt: record.completedAt,
+		completionSummary: record.completionSummary,
+	} as Omit<SpecRecord, "createdAt" | "updatedAt">);
+}
+
+export function validateStoredPlan(record: PlanRecord): void {
+	validatePlanInput({
+		id: record.id,
+		title: record.title,
+		seed: record.seed,
+		spec: record.spec,
+		status: record.status,
+		summary: record.summary,
+		steps: record.steps,
+		completedAt: record.completedAt,
+		completionSummary: record.completionSummary,
+	} as Omit<PlanRecord, "createdAt" | "updatedAt">);
+}

@@ -52,5 +52,14 @@ export async function readHandoffs(
 	return text
 		.split("\n")
 		.filter(Boolean)
-		.map((line) => JSON.parse(line) as HandoffRecord);
+		.map((line, index) => {
+			try {
+				return JSON.parse(line) as HandoffRecord;
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				throw new Error(
+					`corrupt handoff log '${plan}' at line ${index + 1}: ${message}`,
+				);
+			}
+		});
 }

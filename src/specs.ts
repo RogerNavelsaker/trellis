@@ -8,6 +8,7 @@ import {
 	validateSeed,
 	validateSpecInput,
 	validateSpecStatus,
+	validateStoredSpec,
 } from "./validate.ts";
 import { parseYaml, serializeYaml } from "./yaml.ts";
 
@@ -36,7 +37,7 @@ export function serializeSpec(record: SpecRecord): string {
 
 export function parseSpec(text: string): SpecRecord {
 	const parsed = parseYaml(text);
-	return {
+	const record: SpecRecord = {
 		id: String(parsed.id ?? ""),
 		title: String(parsed.title ?? ""),
 		seed: parsed.seed ? String(parsed.seed) : undefined,
@@ -54,6 +55,8 @@ export function parseSpec(text: string): SpecRecord {
 		acceptance: Array.isArray(parsed.acceptance) ? parsed.acceptance : [],
 		references: Array.isArray(parsed.references) ? parsed.references : [],
 	};
+	validateStoredSpec(record);
+	return record;
 }
 
 export async function createSpec(
@@ -85,7 +88,12 @@ export interface SpecFilters {
 }
 
 export async function readSpec(root: string, id: string): Promise<SpecRecord> {
-	return parseSpec(await readFile(specPath(root, id), "utf8"));
+	try {
+		return parseSpec(await readFile(specPath(root, id), "utf8"));
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		throw new Error(`corrupt spec '${id}': ${message}`);
+	}
 }
 
 export async function updateSpec(

@@ -70,6 +70,7 @@ Planned storage layout:
 
 See [docs/contract.md](docs/contract.md) for the concrete storage contract.
 See [docs/lifecycle.md](docs/lifecycle.md) for how specs and plans fit into the rest of `os-eco`.
+See [docs/json-contract.md](docs/json-contract.md) for the stable `--json` response shape.
 
 ## Example
 
@@ -128,6 +129,24 @@ trellis audit blocked --json
 
 This repo uses Bun, TypeScript, Commander, and Biome.
 
+## Install
+
+Local use:
+
+```bash
+bun install
+bun link
+trellis --help
+```
+
+Direct execution without linking:
+
+```bash
+bun src/index.ts --help
+```
+
+The published package name is `@os-eco/trellis-cli`.
+
 ## Development
 
 ```bash
@@ -136,6 +155,22 @@ bun test
 bun x tsc --noEmit
 bunx @biomejs/biome check .
 ```
+
+## Release Hygiene
+
+Before cutting a release:
+
+```bash
+bun test
+bun x tsc --noEmit
+bunx @biomejs/biome check .
+```
+
+Release expectations:
+
+- keep `--json` payloads backward-compatible per `docs/json-contract.md`
+- keep `.trellis/` storage backward-compatible per `docs/contract.md`
+- prefer additive changes over renames or removals
 
 ## Transfer Intent
 
