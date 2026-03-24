@@ -2,38 +2,34 @@
 
 Trellis is the `os-eco` tool for repo-local specs, plans, handoffs, and workflow audit history.
 
-## Core Thesis
+## What Trellis Owns
 
-Overstory should not own every workflow artifact format itself. Its job is to orchestrate agents and sessions. Structured specification and planning artifacts belong in a sibling tool that:
+Trellis owns the planning artifacts that should live in the repo as plain files:
 
-- stores plain files in the repo
-- can be used without Overstory
-- gives Overstory a stable external contract instead of an embedded workflow-specific layout
+- specs
+- plans
+- handoffs
+- workflow event history
+- validation and audit commands around those artifacts
 
-## Why Not Keep Workflow Artifacts Inside Overstory
-
-- It couples orchestration and planning too tightly.
-- It makes workflow support feel framework-specific instead of ecosystem-native.
-- It complicates upstreaming because the concern boundary is unclear.
-
-## Trellis Responsibility Boundary
-
-Trellis should own:
-
-- spec document layout
-- plan and handoff document layout
-- handoff artifacts between humans and agents
-- future validation and migration commands
-- explicit links to Seeds issue IDs without becoming the issue tracker
-
-Trellis should not own:
+Trellis does not own:
 
 - issue tracking
 - issue status or dependency graphs
 - agent spawning
-- prompt rendering
+- prompt composition
 - expertise capture
-- long-term project memory
+- long-term memory
+
+## Why This Is Separate From Overstory
+
+Overstory is the orchestrator. Trellis is the planning-artifact tool.
+
+Keeping those concerns separate matters because:
+
+- Overstory can stay focused on sessions, worktrees, coordination, and runtime integration
+- Trellis can stay focused on stable repo-local workflow documents
+- other `os-eco` tools can point at Trellis artifacts without inheriting Overstory-specific layout choices
 
 ## Integration Targets
 
@@ -45,4 +41,4 @@ Trellis should not own:
 
 ## Immediate Goal
 
-The immediate goal is not to reproduce OpenSpec one-to-one. It is to give Overstory a native `os-eco` workflow document target so co-creation and other structured flows can point at Trellis without pushing planning state back into the orchestrator.
+The immediate goal is not to reproduce OpenSpec one-to-one. It is to give Overstory and the rest of `os-eco` a native workflow document target so structured work can point at Trellis without pushing planning state back into the orchestrator.

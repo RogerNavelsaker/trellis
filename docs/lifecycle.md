@@ -2,7 +2,7 @@
 
 Trellis does not replace any existing `os-eco` tool. It provides the workflow documents that connect them.
 
-## 1. Seeds declares the work
+## 1. Seeds Declares the Work
 
 Seeds remains the source of truth for issue state:
 
@@ -13,7 +13,7 @@ Seeds remains the source of truth for issue state:
 
 A Trellis spec or plan may link to a Seeds issue through `seed: seed-123`, but Trellis never becomes the issue tracker.
 
-## 2. Trellis captures intent as a spec
+## 2. Trellis Captures Intent as a Spec
 
 Use a spec when the work needs a durable statement of intent:
 
@@ -25,7 +25,7 @@ Use a spec when the work needs a durable statement of intent:
 
 Specs should be stable enough to survive across multiple implementation attempts.
 
-## 3. Trellis captures execution shape as a plan
+## 3. Trellis Captures Execution Shape as a Plan
 
 Use a plan when the work needs an actionable execution path:
 
@@ -50,7 +50,7 @@ Closure rules are explicit:
 - blocked plans require a reason
 - transitions and handoffs are recorded in `.trellis/events.jsonl` for auditability
 
-That matters because Trellis is not just storing files anymore. It is expressing workflow state transitions that Overstory can later target directly.
+That matters because Trellis is not just storing files. It expresses workflow state transitions that the rest of the stack can rely on.
 
 ## 4. Canopy Can Supply Document Templates
 
@@ -69,7 +69,7 @@ The boundary should stay:
 - Trellis owns placeholder contracts and repo-local storage
 - Overstory uses those rendered artifacts during orchestration
 
-This is why Trellis now exposes:
+This is why Trellis exposes:
 
 - `trellis template placeholders <kind>`
 - `trellis template render <kind> --data key=value`
@@ -84,7 +84,7 @@ The intended integration path is:
 - Overstory passes those artifacts into agents as context
 - Overstory records durable handoffs into Trellis when work changes owners or phases
 
-This is the integration path for structured workflow output without making Overstory the owner of planning documents.
+This keeps structured workflow output in Trellis without making Overstory the owner of planning documents.
 
 ## 6. Sapling Consumes Trellis Context
 

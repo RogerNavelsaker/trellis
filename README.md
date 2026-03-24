@@ -103,7 +103,7 @@ Trellis keeps its state inside `.trellis/`:
 
 See [docs/contract.md](docs/contract.md) for the storage contract and [docs/json-contract.md](docs/json-contract.md) for stable `--json` output.
 
-## Part of os-eco
+## How It Fits
 
 Trellis is part of the `os-eco` toolchain, but it does not replace the other tools:
 
