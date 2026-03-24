@@ -43,9 +43,13 @@ The first version focuses on:
 - `trellis init` to scaffold a repo-local `.trellis/` tree
 - `trellis doctor` to validate that tree
 - `trellis spec create|show|list|update`
+- `trellis spec start|complete`
 - `trellis plan create|show|list|update`
+- `trellis plan start|block|resume|complete`
 - `trellis handoff append|show`
+- `trellis handoff list`
 - `trellis template init|show`
+- `trellis template placeholders|render`
 - `trellis show` / `trellis inspect`
 - a documented filesystem contract that Overstory can integrate against later
 
@@ -91,6 +95,20 @@ trellis handoff append auth-refresh-v1 \
   --seed seed-123 \
   --spec auth-refresh \
   --summary "Implement storage and CLI changes, then hand off for review."
+
+trellis plan block auth-refresh-v1 \
+  --reason "Waiting for schema review" \
+  --from lead \
+  --to reviewer
+
+trellis template render handoff \
+  --data plan_id=auth-refresh-v1 \
+  --data spec_id=auth-refresh \
+  --data seed_id=seed-123 \
+  --data from=lead \
+  --data to=builder \
+  --data summary="Implement storage and CLI changes" \
+  --data next_step_1="Open PR and request review"
 
 trellis inspect auth-refresh --json
 ```

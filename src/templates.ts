@@ -49,6 +49,36 @@ To: {{to}}
 } as const;
 
 export type TemplateKind = keyof typeof TEMPLATE_FILES;
+export const TEMPLATE_PLACEHOLDERS: Record<TemplateKind, string[]> = {
+	spec: [
+		"spec_id",
+		"title",
+		"seed_id",
+		"timestamp",
+		"objective",
+		"constraint_1",
+		"acceptance_1",
+		"reference_1",
+	],
+	plan: [
+		"plan_id",
+		"title",
+		"seed_id",
+		"spec_id",
+		"timestamp",
+		"summary",
+		"step_1",
+	],
+	handoff: [
+		"plan_id",
+		"spec_id",
+		"seed_id",
+		"from",
+		"to",
+		"summary",
+		"next_step_1",
+	],
+};
 
 function templatePath(root: string, kind: TemplateKind): string {
 	const ext = kind === "handoff" ? "md" : "yaml";

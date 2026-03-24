@@ -10,8 +10,15 @@ import { appendHandoff, readHandoffs } from "./handoffs.ts";
 import { initProject } from "./init.ts";
 import { jsonError, jsonOutput } from "./json.ts";
 import { createPlan, listPlans, readPlan, updatePlan } from "./plans.ts";
+import { renderTemplate } from "./render.ts";
 import { createSpec, listSpecs, readSpec, updateSpec } from "./specs.ts";
-import { initTemplates, readTemplate, type TemplateKind } from "./templates.ts";
+import {
+	initTemplates,
+	readTemplate,
+	TEMPLATE_PLACEHOLDERS,
+	type TemplateKind,
+} from "./templates.ts";
+import { transitionPlan, transitionSpec } from "./transitions.ts";
 
 export const VERSION = "0.1.0";
 
@@ -200,6 +207,40 @@ async function main(): Promise<void> {
 			}
 		});
 	spec
+		.command("start")
+		.argument("<id>", "Spec identifier")
+		.description("Transition a spec from draft to active")
+		.action(async (id: string) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const spec = await transitionSpec(cwd(), id, "active");
+				if (global.json) {
+					jsonOutput("spec start", { spec });
+					return;
+				}
+				console.log(chalk.green(`Started spec ${spec.id}`));
+			} catch (error) {
+				handleCommandError("spec start", error, global.json);
+			}
+		});
+	spec
+		.command("complete")
+		.argument("<id>", "Spec identifier")
+		.description("Transition a spec from active to done")
+		.action(async (id: string) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const spec = await transitionSpec(cwd(), id, "done");
+				if (global.json) {
+					jsonOutput("spec complete", { spec });
+					return;
+				}
+				console.log(chalk.green(`Completed spec ${spec.id}`));
+			} catch (error) {
+				handleCommandError("spec complete", error, global.json);
+			}
+		});
+	spec
 		.command("list")
 		.option("--status <status>", "Filter by status")
 		.option("--seed <seed>", "Filter by Seeds issue ID")
@@ -307,6 +348,88 @@ async function main(): Promise<void> {
 			}
 		});
 	plan
+		.command("start")
+		.argument("<id>", "Plan identifier")
+		.description("Transition a plan into active work")
+		.action(async (id: string) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const plan = await transitionPlan(cwd(), id, "active");
+				if (global.json) {
+					jsonOutput("plan start", { plan });
+					return;
+				}
+				console.log(chalk.green(`Started plan ${plan.id}`));
+			} catch (error) {
+				handleCommandError("plan start", error, global.json);
+			}
+		});
+	plan
+		.command("block")
+		.argument("<id>", "Plan identifier")
+		.requiredOption("--reason <text>", "Why the plan is blocked")
+		.option("--from <name>", "Actor recording the block")
+		.option("--to <name>", "Who should receive the handoff")
+		.description("Block a plan and optionally record a handoff reason")
+		.action(async (id: string, opts) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const plan = await transitionPlan(cwd(), id, "blocked", {
+					reason: opts.reason,
+					actor: opts.from,
+					to: opts.to,
+				});
+				if (global.json) {
+					jsonOutput("plan block", { plan });
+					return;
+				}
+				console.log(chalk.yellow(`Blocked plan ${plan.id}`));
+			} catch (error) {
+				handleCommandError("plan block", error, global.json);
+			}
+		});
+	plan
+		.command("resume")
+		.argument("<id>", "Plan identifier")
+		.description("Resume a blocked plan back to active")
+		.action(async (id: string) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const plan = await transitionPlan(cwd(), id, "active");
+				if (global.json) {
+					jsonOutput("plan resume", { plan });
+					return;
+				}
+				console.log(chalk.green(`Resumed plan ${plan.id}`));
+			} catch (error) {
+				handleCommandError("plan resume", error, global.json);
+			}
+		});
+	plan
+		.command("complete")
+		.argument("<id>", "Plan identifier")
+		.option("--reason <text>", "Completion note")
+		.option("--from <name>", "Actor recording completion")
+		.option("--to <name>", "Optional recipient for completion handoff")
+		.description("Transition a plan into done")
+		.action(async (id: string, opts) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const plan = await transitionPlan(cwd(), id, "done", {
+					reason: opts.reason,
+					actor: opts.from,
+					to: opts.to,
+				});
+				if (global.json) {
+					jsonOutput("plan complete", { plan });
+					return;
+				}
+				console.log(chalk.green(`Completed plan ${plan.id}`));
+			} catch (error) {
+				handleCommandError("plan complete", error, global.json);
+			}
+		});
+	plan
 		.command("list")
 		.option("--status <status>", "Filter by status")
 		.option("--seed <seed>", "Filter by Seeds issue ID")
@@ -402,6 +525,46 @@ async function main(): Promise<void> {
 				}
 			},
 		);
+	handoff
+		.command("list")
+		.option("--plan <id>", "Filter by plan ID")
+		.option("--from <name>", "Filter by sender")
+		.option("--to <name>", "Filter by recipient")
+		.option("--seed <id>", "Filter by Seeds issue ID")
+		.option("--spec <id>", "Filter by linked spec ID")
+		.option("--limit <count>", "Limit results", parseInteger)
+		.description("Query handoff logs across plans")
+		.action(async (opts) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const plans = opts.plan
+					? [opts.plan]
+					: (await listPlans(cwd())).map((plan) => plan.id);
+				const records = (
+					await Promise.all(plans.map((planId) => readHandoffs(cwd(), planId)))
+				)
+					.flat()
+					.filter((record) => (opts.from ? record.from === opts.from : true))
+					.filter((record) => (opts.to ? record.to === opts.to : true))
+					.filter((record) => (opts.seed ? record.seed === opts.seed : true))
+					.filter((record) => (opts.spec ? record.spec === opts.spec : true))
+					.slice(opts.limit ? -opts.limit : undefined);
+				if (global.json) {
+					jsonOutput("handoff list", {
+						handoffs: records,
+						count: records.length,
+					});
+					return;
+				}
+				for (const record of records) {
+					console.log(
+						`${chalk.cyan(record.timestamp)} ${record.plan} ${record.from} -> ${record.to}: ${record.summary}`,
+					);
+				}
+			} catch (error) {
+				handleCommandError("handoff list", error, global.json);
+			}
+		});
 
 	const template = program
 		.command("template")
@@ -438,6 +601,47 @@ async function main(): Promise<void> {
 				console.log(templateText);
 			} catch (error) {
 				handleCommandError("template show", error, global.json);
+			}
+		});
+	template
+		.command("placeholders")
+		.argument("<kind>", "Template kind: spec, plan, or handoff")
+		.description(
+			"List the stable placeholders Trellis guarantees for a template kind",
+		)
+		.action((kind: TemplateKind) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const placeholders = TEMPLATE_PLACEHOLDERS[kind];
+				if (!placeholders) throw new Error(`Unknown template kind '${kind}'`);
+				if (global.json) {
+					jsonOutput("template placeholders", { kind, placeholders });
+					return;
+				}
+				for (const placeholder of placeholders) {
+					console.log(placeholder);
+				}
+			} catch (error) {
+				handleCommandError("template placeholders", error, global.json);
+			}
+		});
+	template
+		.command("render")
+		.argument("<kind>", "Template kind: spec, plan, or handoff")
+		.option("--data <pair>", "Key=value placeholder binding", collectValues, [])
+		.description("Render a template with explicit placeholder bindings")
+		.action(async (kind: TemplateKind, opts) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const data = parseKeyValuePairs(opts.data);
+				const output = await renderTemplate(cwd(), kind, data);
+				if (global.json) {
+					jsonOutput("template render", { kind, data, output });
+					return;
+				}
+				console.log(output);
+			} catch (error) {
+				handleCommandError("template render", error, global.json);
 			}
 		});
 
@@ -511,6 +715,17 @@ function parseInteger(value: string): number {
 	if (!Number.isFinite(parsed) || parsed < 1)
 		throw new Error("limit must be a positive integer");
 	return parsed;
+}
+
+function parseKeyValuePairs(values: string[]): Record<string, string> {
+	return Object.fromEntries(
+		values.map((entry) => {
+			const separator = entry.indexOf("=");
+			if (separator === -1)
+				throw new Error(`invalid --data pair '${entry}', expected key=value`);
+			return [entry.slice(0, separator), entry.slice(separator + 1)];
+		}),
+	);
 }
 
 function hasExplicitArrayOption(values: string[] | undefined): boolean {

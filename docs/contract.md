@@ -86,11 +86,22 @@ Each line is a JSON object with:
 - `trellis init`
 - `trellis doctor`
 - `trellis spec create|show|list|update`
+- `trellis spec start|complete`
 - `trellis plan create|show|list|update`
+- `trellis plan start|block|resume|complete`
 - `trellis handoff append|show`
+- `trellis handoff list`
 - `trellis template init|show`
+- `trellis template placeholders|render`
 - `trellis show`
 - `trellis inspect`
+
+## Lifecycle Rules
+
+- spec: `draft -> active -> done`
+- plan: `draft -> active|blocked`, `active -> blocked|done`, `blocked -> active|done`
+- blocking a plan requires a reason
+- blocking or completing a plan can also record a durable handoff when `from`, `to`, and `reason` are provided
 
 ## Follow-up Overstory Integration Target
 

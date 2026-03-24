@@ -37,6 +37,13 @@ Use a plan when the work needs an actionable execution path:
 
 Plans can be shorter-lived than specs and may be revised more often.
 
+The explicit lifecycle is:
+
+- spec: `draft -> active -> done`
+- plan: `draft -> active|blocked`, `active -> blocked|done`, `blocked -> active|done`
+
+That matters because Trellis is not just storing files anymore. It is expressing workflow state transitions that Overstory can later target directly.
+
 ## 4. Canopy can supply document templates
 
 Canopy remains the prompt system. Trellis should not absorb prompt management.
@@ -46,6 +53,18 @@ The intended interaction is:
 - Canopy renders prompt content
 - Trellis stores the resulting workflow documents
 - templates in `.trellis/templates/` give both humans and agents a stable structure
+- Trellis guarantees stable placeholder names for `spec`, `plan`, and `handoff` templates
+
+The boundary should stay:
+
+- Canopy owns prompt composition and authoring quality
+- Trellis owns placeholder contracts and repo-local storage
+- Overstory uses those rendered artifacts during orchestration
+
+This is why Trellis now exposes:
+
+- `trellis template placeholders <kind>`
+- `trellis template render <kind> --data key=value`
 
 ## 5. Overstory orchestrates against Trellis artifacts
 
@@ -89,3 +108,13 @@ That boundary matters: Trellis stores the workflow history, Mulch stores the reu
 - Canopy answers: what prompt/program should shape the interaction?
 - Mulch answers: what should future agents remember?
 
+## Practical Lifecycle
+
+1. Seeds creates or exposes a ready issue.
+2. Trellis creates a spec when the work needs durable intent.
+3. Trellis creates a plan that links the issue and spec.
+4. Overstory or a human starts the plan.
+5. Handoffs accumulate as the work changes owners or phases.
+6. The plan completes when the execution path is done.
+7. The spec completes when the intended change is fully satisfied.
+8. Mulch captures the reusable lessons after the work is complete.
