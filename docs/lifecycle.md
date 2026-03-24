@@ -1,4 +1,4 @@
-# Trellis Lifecycle In The os-eco Ecosystem
+# Trellis Lifecycle in the os-eco Ecosystem
 
 Trellis does not replace any existing `os-eco` tool. It provides the workflow documents that connect them.
 
@@ -52,7 +52,7 @@ Closure rules are explicit:
 
 That matters because Trellis is not just storing files anymore. It is expressing workflow state transitions that Overstory can later target directly.
 
-## 4. Canopy can supply document templates
+## 4. Canopy Can Supply Document Templates
 
 Canopy remains the prompt system. Trellis should not absorb prompt management.
 
@@ -74,7 +74,7 @@ This is why Trellis now exposes:
 - `trellis template placeholders <kind>`
 - `trellis template render <kind> --data key=value`
 
-## 5. Overstory orchestrates against Trellis artifacts
+## 5. Overstory Orchestrates Against Trellis Artifacts
 
 Overstory remains the orchestrator.
 
@@ -84,9 +84,9 @@ The intended integration path is:
 - Overstory passes those artifacts into agents as context
 - Overstory records durable handoffs into Trellis when work changes owners or phases
 
-This is the future replacement path for the OpenSpec-shaped workflow output in `#130`.
+This is the integration path for structured workflow output without making Overstory the owner of planning documents.
 
-## 6. Sapling consumes Trellis context
+## 6. Sapling Consumes Trellis Context
 
 Sapling remains the headless coding runtime.
 
@@ -96,7 +96,7 @@ Trellis gives Sapling a stable set of repo-local documents to consume:
 - plan for execution
 - handoff log for continuity
 
-## 7. Mulch records durable learning after the work
+## 7. Mulch Records Durable Learning After the Work
 
 Mulch remains the expertise system.
 

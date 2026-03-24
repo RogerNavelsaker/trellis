@@ -1,93 +1,49 @@
-# trellis
+# Trellis
 
-[![npm version](https://img.shields.io/npm/v/%40os-eco%2Ftrellis-cli)](https://www.npmjs.com/package/@os-eco/trellis-cli)
-[![license](https://img.shields.io/github/license/RogerNavelsaker/trellis)](LICENSE)
+Git-native specs, plans, handoffs, and workflow audit history.
 
-Git-native specs, plans, and handoff artifacts for the `os-eco` toolchain.
+[![npm](https://img.shields.io/npm/v/@os-eco/trellis-cli)](https://www.npmjs.com/package/@os-eco/trellis-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Trellis is a candidate replacement for the OpenSpec-shaped workflow artifacts introduced in `overstory` PR `#130`. The intent is to move specification and plan artifacts into their own first-class tool so Overstory can stay focused on orchestration while Trellis owns repo-local workflow documents.
+Trellis stores planning artifacts as plain YAML and JSONL files inside your repo. It is designed for the `os-eco` stack, but it works as a standalone CLI with no daemon or server.
 
-## Why this exists
+Trellis gives you:
+- durable specs for intent, constraints, acceptance, and references
+- plans for execution shape and status transitions
+- append-only handoffs between humans and agents
+- event and audit history for blocked, stale, or orphaned work
 
-OpenSpec is useful as a workflow vocabulary, but it does not fit the `os-eco` model cleanly:
+## Install
 
-- it is not aligned with the current `os-eco` naming and packaging surface
-- it pushes specification concerns into Overstory instead of keeping them as a separate repo-local tool
-- it makes workflow output shape feel bolted on instead of native to the ecosystem
-
-Trellis is the proposed replacement direction:
-
-- Git-native storage inside the repo
-- zero runtime dependencies beyond Bun
-- CLI-first with `--json`
-- multi-agent safe filesystem mutations
-- designed to compose with Overstory, Sapling, Seeds, Mulch, and Canopy
-
-## Relationship To The Existing Tools
-
-- `overstory`: orchestration, worktrees, sessions, coordination
-- `sapling`: headless coding runtime
-- `seeds`: issue tracking and dependency state
-- `mulch`: expertise and conventions
-- `canopy`: prompts and prompt composition
-- `trellis`: specs, plans, handoff artifacts, and workflow structure
-
-Trellis complements existing tools:
-
-- it does not replace Seeds as the source of truth for issue state
-- it does not replace Mulch as the source of truth for expertise
-- it does not replace Canopy as the source of truth for prompts
-- it gives those tools a shared, repo-native place to point at richer workflow documents
-
-## Part Of os-eco
-
-Trellis is intended to sit alongside:
-
-- `seeds` for issue state
-- `mulch` for expertise
-- `canopy` for prompts
-- `sapling` for coding-runtime execution
-- `overstory` for orchestration
-
-## Initial Scope
-
-The first version focuses on:
-
-- `trellis init` to scaffold a repo-local `.trellis/` tree
-- `trellis doctor` to validate that tree
-- `trellis spec create|show|list|update`
-- `trellis spec start|complete`
-- `trellis plan create|show|list|update`
-- `trellis plan start|block|resume|complete`
-- `trellis handoff append|show|latest|list`
-- `trellis audit blocked|stale|orphaned`
-- `trellis event list`
-- `trellis template init|show`
-- `trellis template placeholders|render`
-- `trellis show` / `trellis inspect` / `trellis timeline`
-- a documented filesystem contract that Overstory can integrate against later
-
-Planned storage layout:
-
-```text
-.trellis/
-  specs/
-  plans/
-  handoffs/
-  events.jsonl
-  templates/
-  locks/
-  README.md
-  .gitignore
-```
-
-See [docs/contract.md](docs/contract.md) for the concrete storage contract.
-See [docs/lifecycle.md](docs/lifecycle.md) for how specs and plans fit into the rest of `os-eco`.
-See [docs/json-contract.md](docs/json-contract.md) for the stable `--json` response shape.
-
-## Example
+Requires [Bun](https://bun.sh) v1.0+.
 
 ```bash
+bun install -g @os-eco/trellis-cli
+```
+
+Or try without installing:
+
+```bash
+npx @os-eco/trellis-cli --help
+```
+
+### Development
+
+```bash
+git clone https://github.com/RogerNavelsaker/trellis.git
+cd trellis
+bun install
+bun link              # Makes 'trellis' and 'tl' available globally
+
+bun test
+bun run lint
+bun run typecheck
+```
+
+## Quick Start
+
+```bash
+cd your-project
 trellis init
 
 trellis spec create auth-refresh \
@@ -105,40 +61,14 @@ trellis plan create auth-refresh-v1 \
   --step "Define on-disk token format" \
   --step "Wire refresh into CLI flow"
 
-trellis handoff append auth-refresh-v1 \
-  --from lead \
-  --to builder \
-  --seed seed-123 \
-  --spec auth-refresh \
-  --summary "Implement storage and CLI changes, then hand off for review."
-
-trellis plan block auth-refresh-v1 \
-  --reason "Waiting for schema review" \
-  --from lead \
-  --to reviewer
-
-trellis plan complete auth-refresh-v1 \
-  --summary "Storage and CLI flow landed in main." \
-  --from reviewer \
-  --to lead
-
-trellis spec complete auth-refresh \
-  --summary "First auth refresh increment shipped with linked plan complete."
-
-trellis template render handoff \
-  --data plan_id=auth-refresh-v1 \
-  --data spec_id=auth-refresh \
-  --data seed_id=seed-123 \
-  --data from=lead \
-  --data to=builder \
-  --data summary="Implement storage and CLI changes" \
-  --data next_step_1="Open PR and request review"
-
-trellis inspect auth-refresh --json
-trellis audit blocked --json
+trellis plan start auth-refresh-v1
+trellis handoff append auth-refresh-v1 --from lead --to builder --summary "Implement storage and CLI changes."
+trellis timeline auth-refresh-v1
 ```
 
 ## Commands
+
+Every command supports `--json` where noted. ANSI colors respect `NO_COLOR`.
 
 | Area | Commands |
 | --- | --- |
@@ -150,51 +80,68 @@ trellis audit blocked --json
 | Templates | `template init`, `template show`, `template placeholders`, `template render` |
 | Shell | `completions bash|zsh|fish` |
 
-## Tooling
+## Storage
 
-This repo uses Bun, TypeScript, Commander, and Biome.
+Trellis keeps its state inside `.trellis/`:
 
-## Install
-
-Local use:
-
-```bash
-bun install
-bun link
-trellis --help
+```text
+.trellis/
+  specs/
+    <spec-id>.yaml
+  plans/
+    <plan-id>.yaml
+  handoffs/
+    <plan-id>.jsonl
+  events.jsonl
+  templates/
+  locks/
+  README.md
+  .gitignore
 ```
 
-Global install:
+See [docs/contract.md](docs/contract.md) for the storage contract and [docs/json-contract.md](docs/json-contract.md) for stable `--json` output.
 
-```bash
-bun install -g @os-eco/trellis-cli
-trellis --help
-```
+## Part of os-eco
 
-`npx` fallback:
+Trellis is part of the `os-eco` toolchain, but it does not replace the other tools:
 
-```bash
-npx @os-eco/trellis-cli --help
-```
+- `seeds` owns issue state, readiness, and dependencies
+- `mulch` owns expertise and durable lessons
+- `canopy` owns prompts and prompt composition
+- `sapling` owns headless coding-runtime execution
+- `overstory` owns orchestration, worktrees, and coordination
+- `trellis` owns repo-local specs, plans, handoffs, and workflow audit history
 
-Direct execution without linking:
+That means Trellis can link to a Seeds issue with `seed: seed-123`, but it never becomes the issue tracker. It can store rendered templates, but it does not become the prompt system.
 
-```bash
-bun src/index.ts --help
-```
+See [docs/lifecycle.md](docs/lifecycle.md) for the full lifecycle model.
 
-The published package name is `@os-eco/trellis-cli`.
+## Design Principles
 
-## Development
+Trellis follows the same core principles as the rest of `os-eco`:
 
-```bash
-bun install
-bun test
-bun x tsc --noEmit
-bunx @biomejs/biome check .
-```
+- Git-native storage: YAML and JSONL files that merge cleanly and need no external database
+- Zero runtime dependencies: a single Bun CLI with no daemon or server
+- Multi-agent safe: advisory file locking for concurrent writes
+- CLI-first: every operation is a shell command with `--json`
+- Consistent UX: shell completions, help screens, and flag conventions aligned with the stack
 
-## Release Hygiene
+## Integration
+
+Trellis works standalone, but it is designed to compose cleanly with the rest of the ecosystem.
+
+Current downstream usage is:
+- humans can create and update specs and plans directly with `trellis`
+- Overstory can bootstrap co-creation specs into `.trellis/specs/`
+- Trellis remains the ongoing edit path for richer planning state
+
+The important boundary is:
+- Overstory bootstraps and orchestrates
+- Trellis owns the planning artifacts and audit trail
+
+See [docs/positioning.md](docs/positioning.md) for the responsibility boundary and integration targets.
+
+## Release Notes
 
 Before cutting a release:
 
@@ -205,12 +152,11 @@ bunx @biomejs/biome check .
 ```
 
 Release expectations:
-
-- keep `--json` payloads backward-compatible per `docs/json-contract.md`
-- keep `.trellis/` storage backward-compatible per `docs/contract.md`
+- keep `--json` payloads backward-compatible per [docs/json-contract.md](docs/json-contract.md)
+- keep `.trellis/` storage backward-compatible per [docs/contract.md](docs/contract.md)
 - prefer additive changes over renames or removals
-- keep help/version/completion behavior aligned with `os-eco` CLI standards
+- keep help, version, and completion behavior aligned with the `os-eco` CLI style
 
 ## Transfer Intent
 
-This repo is being incubated under `RogerNavelsaker/trellis` with the intent to transfer it to the `os-eco` owner once the direction, naming, and Overstory follow-up integration are confirmed.
+Trellis is being incubated under `RogerNavelsaker/trellis` with the intent to transfer it into the `os-eco` umbrella once the direction and ownership path are confirmed.

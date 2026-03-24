@@ -1,6 +1,6 @@
 # Trellis Positioning
 
-Trellis is the proposed `os-eco` answer to repo-local specs, plans, and handoff documents.
+Trellis is the `os-eco` tool for repo-local specs, plans, handoffs, and workflow audit history.
 
 ## Core Thesis
 
@@ -10,7 +10,7 @@ Overstory should not own every workflow artifact format itself. Its job is to or
 - can be used without Overstory
 - gives Overstory a stable external contract instead of an embedded workflow-specific layout
 
-## Why Not Keep OpenSpec In Overstory
+## Why Not Keep Workflow Artifacts Inside Overstory
 
 - It couples orchestration and planning too tightly.
 - It makes workflow support feel framework-specific instead of ecosystem-native.
@@ -45,4 +45,4 @@ Trellis should not own:
 
 ## Immediate Goal
 
-The immediate goal is not to reproduce OpenSpec one-to-one. It is to give Overstory a native `os-eco` workflow document target so a later Overstory PR can replace the current OpenSpec-shaped output path with Trellis.
+The immediate goal is not to reproduce OpenSpec one-to-one. It is to give Overstory a native `os-eco` workflow document target so co-creation and other structured flows can point at Trellis without pushing planning state back into the orchestrator.
