@@ -24,6 +24,7 @@ Trellis should own:
 - plan and handoff document layout
 - handoff artifacts between humans and agents
 - future validation and migration commands
+- explicit links to Seeds issue IDs without becoming the issue tracker
 
 Trellis should not own:
 
@@ -41,3 +42,7 @@ Trellis should not own:
 - Seeds can link issue IDs to Trellis plan/spec files while remaining authoritative for issue state.
 - Canopy can template Trellis document bodies.
 - Mulch can capture durable lessons from completed Trellis work without Trellis becoming an expertise store.
+
+## Immediate Goal
+
+The immediate goal is not to reproduce OpenSpec one-to-one. It is to give Overstory a native `os-eco` workflow document target so a later Overstory PR can replace the current OpenSpec-shaped output path with Trellis.

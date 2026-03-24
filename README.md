@@ -42,7 +42,10 @@ The first version focuses on:
 
 - `trellis init` to scaffold a repo-local `.trellis/` tree
 - `trellis doctor` to validate that tree
-- a documented filesystem contract for future `spec`, `plan`, and `handoff` commands
+- `trellis spec create|show|list`
+- `trellis plan create|show|list`
+- `trellis handoff append|show`
+- a documented filesystem contract that Overstory can integrate against later
 
 Planned storage layout:
 
@@ -52,8 +55,39 @@ Planned storage layout:
   plans/
   handoffs/
   templates/
+  locks/
   README.md
   .gitignore
+```
+
+See [docs/contract.md](docs/contract.md) for the concrete storage contract.
+
+## Example
+
+```bash
+trellis init
+
+trellis spec create auth-refresh \
+  --title "Refresh token redesign" \
+  --seed seed-123 \
+  --objective "Move auth to short-lived access tokens with explicit refresh flow." \
+  --constraint "No new daemon" \
+  --acceptance "CLI login flow remains backward compatible"
+
+trellis plan create auth-refresh-v1 \
+  --title "Ship the first auth increment" \
+  --seed seed-123 \
+  --spec auth-refresh \
+  --summary "Land storage and CLI wiring first." \
+  --step "Define on-disk token format" \
+  --step "Wire refresh into CLI flow"
+
+trellis handoff append auth-refresh-v1 \
+  --from lead \
+  --to builder \
+  --seed seed-123 \
+  --spec auth-refresh \
+  --summary "Implement storage and CLI changes, then hand off for review."
 ```
 
 ## Tooling
@@ -71,4 +105,4 @@ bunx @biomejs/biome check .
 
 ## Transfer Intent
 
-This repo is being incubated under `RogerNavelsaker/trellis` with the intent to transfer it to the `os-eco` owner once the direction and naming are confirmed.
+This repo is being incubated under `RogerNavelsaker/trellis` with the intent to transfer it to the `os-eco` owner once the direction, naming, and Overstory follow-up integration are confirmed.
