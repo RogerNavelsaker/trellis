@@ -16,6 +16,7 @@ export async function doctorProject(root: string): Promise<DoctorCheck[]> {
 		`${TRELLIS_DIR}/plans`,
 		`${TRELLIS_DIR}/handoffs`,
 		`${TRELLIS_DIR}/templates`,
+		`${TRELLIS_DIR}/locks`,
 	];
 
 	return Promise.all(

@@ -85,9 +85,12 @@ Each line is a JSON object with:
 
 - `trellis init`
 - `trellis doctor`
-- `trellis spec create|show|list`
-- `trellis plan create|show|list`
+- `trellis spec create|show|list|update`
+- `trellis plan create|show|list|update`
 - `trellis handoff append|show`
+- `trellis template init|show`
+- `trellis show`
+- `trellis inspect`
 
 ## Follow-up Overstory Integration Target
 
@@ -98,4 +101,3 @@ The follow-up Overstory PR should:
 - keep issue identifiers in Seeds and reference them through Trellis `seed` fields
 - keep prompt selection in Canopy / Overstory workflow profiles
 - use Trellis handoffs for durable workflow payloads when appropriate
-

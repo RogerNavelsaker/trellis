@@ -26,6 +26,7 @@ export async function initProject(root: string): Promise<void> {
 	await mkdir(join(trellisDir, "plans"), { recursive: true });
 	await mkdir(join(trellisDir, "handoffs"), { recursive: true });
 	await mkdir(join(trellisDir, "templates"), { recursive: true });
+	await mkdir(join(trellisDir, "locks"), { recursive: true });
 	await writeFile(join(trellisDir, ".gitignore"), TRELLIS_GITIGNORE, "utf8");
 	await writeFile(join(trellisDir, "README.md"), TRELLIS_README, "utf8");
 }

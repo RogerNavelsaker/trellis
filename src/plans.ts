@@ -2,7 +2,14 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { TRELLIS_DIR } from "./init.ts";
 import { withWriteLock } from "./lock.ts";
+import { compactPatch } from "./patch.ts";
+import { readSpec } from "./specs.ts";
 import type { PlanRecord } from "./types.ts";
+import {
+	validatePlanInput,
+	validatePlanStatus,
+	validateSeed,
+} from "./validate.ts";
 import { parseYaml, serializeYaml } from "./yaml.ts";
 
 const PLANS_DIR = "plans";
@@ -46,6 +53,12 @@ export async function createPlan(
 	root: string,
 	input: Omit<PlanRecord, "createdAt" | "updatedAt">,
 ): Promise<PlanRecord> {
+	validatePlanInput(input);
+	if (input.spec) {
+		await readSpec(root, input.spec).catch(() => {
+			throw new Error(`linked spec '${input.spec}' does not exist`);
+		});
+	}
 	const timestamp = new Date().toISOString();
 	const record: PlanRecord = {
 		...input,
@@ -64,11 +77,48 @@ export async function createPlan(
 	return record;
 }
 
+export interface PlanFilters {
+	status?: PlanRecord["status"];
+	seed?: string;
+	spec?: string;
+}
+
 export async function readPlan(root: string, id: string): Promise<PlanRecord> {
 	return parsePlan(await readFile(planPath(root, id), "utf8"));
 }
 
-export async function listPlans(root: string): Promise<PlanRecord[]> {
+export async function updatePlan(
+	root: string,
+	id: string,
+	patch: Partial<
+		Pick<PlanRecord, "title" | "seed" | "spec" | "status" | "summary" | "steps">
+	>,
+): Promise<PlanRecord> {
+	validatePlanStatus(patch.status);
+	validateSeed(patch.seed);
+	if (patch.title !== undefined && !patch.title.trim())
+		throw new Error("title must not be empty");
+	if (patch.spec) {
+		await readSpec(root, patch.spec).catch(() => {
+			throw new Error(`linked spec '${patch.spec}' does not exist`);
+		});
+	}
+	return withWriteLock(root, "plans", async () => {
+		const current = await readPlan(root, id);
+		const updated: PlanRecord = {
+			...current,
+			...compactPatch(patch),
+			updatedAt: new Date().toISOString(),
+		};
+		await writeFile(planPath(root, id), serializePlan(updated), "utf8");
+		return updated;
+	});
+}
+
+export async function listPlans(
+	root: string,
+	filters: PlanFilters = {},
+): Promise<PlanRecord[]> {
 	const dir = join(root, TRELLIS_DIR, PLANS_DIR);
 	const files = (
 		await readdir(dir, { withFileTypes: true }).catch(() => [])
@@ -76,5 +126,11 @@ export async function listPlans(root: string): Promise<PlanRecord[]> {
 	const records = await Promise.all(
 		files.map((entry) => readPlan(root, entry.name.replace(/\.yaml$/, ""))),
 	);
-	return records.sort((left, right) => left.id.localeCompare(right.id));
+	return records
+		.filter((record) =>
+			filters.status ? record.status === filters.status : true,
+		)
+		.filter((record) => (filters.seed ? record.seed === filters.seed : true))
+		.filter((record) => (filters.spec ? record.spec === filters.spec : true))
+		.sort((left, right) => left.id.localeCompare(right.id));
 }

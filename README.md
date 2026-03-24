@@ -42,9 +42,11 @@ The first version focuses on:
 
 - `trellis init` to scaffold a repo-local `.trellis/` tree
 - `trellis doctor` to validate that tree
-- `trellis spec create|show|list`
-- `trellis plan create|show|list`
+- `trellis spec create|show|list|update`
+- `trellis plan create|show|list|update`
 - `trellis handoff append|show`
+- `trellis template init|show`
+- `trellis show` / `trellis inspect`
 - a documented filesystem contract that Overstory can integrate against later
 
 Planned storage layout:
@@ -61,6 +63,7 @@ Planned storage layout:
 ```
 
 See [docs/contract.md](docs/contract.md) for the concrete storage contract.
+See [docs/lifecycle.md](docs/lifecycle.md) for how specs and plans fit into the rest of `os-eco`.
 
 ## Example
 
@@ -88,6 +91,8 @@ trellis handoff append auth-refresh-v1 \
   --seed seed-123 \
   --spec auth-refresh \
   --summary "Implement storage and CLI changes, then hand off for review."
+
+trellis inspect auth-refresh --json
 ```
 
 ## Tooling

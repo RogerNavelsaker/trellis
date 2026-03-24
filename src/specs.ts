@@ -2,7 +2,13 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { TRELLIS_DIR } from "./init.ts";
 import { withWriteLock } from "./lock.ts";
+import { compactPatch } from "./patch.ts";
 import type { SpecRecord } from "./types.ts";
+import {
+	validateSeed,
+	validateSpecInput,
+	validateSpecStatus,
+} from "./validate.ts";
 import { parseYaml, serializeYaml } from "./yaml.ts";
 
 const SPECS_DIR = "specs";
@@ -48,6 +54,7 @@ export async function createSpec(
 	root: string,
 	input: Omit<SpecRecord, "createdAt" | "updatedAt">,
 ): Promise<SpecRecord> {
+	validateSpecInput(input);
 	const timestamp = new Date().toISOString();
 	const record: SpecRecord = {
 		...input,
@@ -66,11 +73,54 @@ export async function createSpec(
 	return record;
 }
 
+export interface SpecFilters {
+	status?: SpecRecord["status"];
+	seed?: string;
+}
+
 export async function readSpec(root: string, id: string): Promise<SpecRecord> {
 	return parseSpec(await readFile(specPath(root, id), "utf8"));
 }
 
-export async function listSpecs(root: string): Promise<SpecRecord[]> {
+export async function updateSpec(
+	root: string,
+	id: string,
+	patch: Partial<
+		Pick<
+			SpecRecord,
+			| "title"
+			| "seed"
+			| "status"
+			| "objective"
+			| "constraints"
+			| "acceptance"
+			| "references"
+		>
+	>,
+): Promise<SpecRecord> {
+	validateSpecStatus(patch.status);
+	validateSeed(patch.seed);
+	if (patch.title !== undefined && !patch.title.trim())
+		throw new Error("title must not be empty");
+	if (patch.objective !== undefined && !patch.objective.trim()) {
+		throw new Error("objective must not be empty");
+	}
+	return withWriteLock(root, "specs", async () => {
+		const current = await readSpec(root, id);
+		const updated: SpecRecord = {
+			...current,
+			...compactPatch(patch),
+			updatedAt: new Date().toISOString(),
+		};
+		await writeFile(specPath(root, id), serializeSpec(updated), "utf8");
+		return updated;
+	});
+}
+
+export async function listSpecs(
+	root: string,
+	filters: SpecFilters = {},
+): Promise<SpecRecord[]> {
 	const dir = join(root, TRELLIS_DIR, SPECS_DIR);
 	const files = (
 		await readdir(dir, { withFileTypes: true }).catch(() => [])
@@ -78,5 +128,10 @@ export async function listSpecs(root: string): Promise<SpecRecord[]> {
 	const records = await Promise.all(
 		files.map((entry) => readSpec(root, entry.name.replace(/\.yaml$/, ""))),
 	);
-	return records.sort((left, right) => left.id.localeCompare(right.id));
+	return records
+		.filter((record) =>
+			filters.status ? record.status === filters.status : true,
+		)
+		.filter((record) => (filters.seed ? record.seed === filters.seed : true))
+		.sort((left, right) => left.id.localeCompare(right.id));
 }
