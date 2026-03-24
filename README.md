@@ -7,6 +7,8 @@ Git-native specs, plans, handoffs, and workflow audit history.
 
 Trellis stores planning artifacts as plain YAML and JSONL files inside your repo. It is designed for the `os-eco` stack, but it works as a standalone CLI with no daemon or server.
 
+Part of `os-eco`: Trellis sits alongside `seeds`, `mulch`, `canopy`, `sapling`, and `overstory` as the repo-local planning and workflow artifact tool.
+
 Trellis gives you:
 - durable specs for intent, constraints, acceptance, and references
 - plans for execution shape and status transitions
