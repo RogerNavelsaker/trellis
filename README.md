@@ -169,7 +169,7 @@ Trellis is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 
 ## Contributing
 
-Contributions are welcome!
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Transfer Intent
 
