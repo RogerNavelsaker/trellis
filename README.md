@@ -99,18 +99,12 @@ Trellis is a small Bun CLI with a file-backed workflow model:
 Trellis keeps workflow state in the repo as plain files. Humans and agents create specs and plans, advance their lifecycle, append handoffs, and inspect the resulting audit trail through the CLI.
 
 ```text
-seeds
-  -> declares work and issue state
-trellis
-  -> stores spec / plan / handoff / event artifacts
-overstory
-  -> bootstraps or references Trellis artifacts during orchestration
-sapling
-  -> consumes Trellis context during coding execution
-mulch
-  -> records durable lessons after the work completes
-canopy
-  -> can render prompt/template content that ends up in Trellis artifacts
+overstory  (orchestrates structured work)
+  ├── trellis  (stores specs, plans, handoffs, audit history)
+  ├── sapling  (consumes Trellis context during coding execution)
+  ├── mulch    (records expertise and durable lessons)
+  ├── seeds    (tracks issue state and readiness)
+  └── canopy   (renders prompts and templates)
 ```
 
 ## Project Structure
@@ -145,17 +139,17 @@ Trellis keeps its state inside `.trellis/`:
 
 ```text
 .trellis/
-  specs/
+  specs/            # one YAML file per spec
     <spec-id>.yaml
-  plans/
+  plans/            # one YAML file per plan
     <plan-id>.yaml
-  handoffs/
+  handoffs/         # append-only JSONL log per plan
     <plan-id>.jsonl
-  events.jsonl
-  templates/
-  locks/
-  README.md
-  .gitignore
+  events.jsonl      # shared transition + handoff event log
+  templates/        # repo-local document templates
+  locks/            # advisory lock files
+  README.md         # local usage note
+  .gitignore        # keep runtime files out of version control
 ```
 
 See [docs/contract.md](docs/contract.md) for the storage contract and [docs/json-contract.md](docs/json-contract.md) for stable `--json` output.
@@ -166,12 +160,12 @@ Trellis is part of the `os-eco` toolchain, but it does not replace the other too
 
 ```text
 os-eco/
-  seeds      -> issue state, readiness, dependencies
-  mulch      -> expertise and durable lessons
-  canopy     -> prompts and prompt composition
-  sapling    -> headless coding-runtime execution
-  overstory  -> orchestration, worktrees, coordination
-  trellis    -> repo-local specs, plans, handoffs, audit history
+  seeds       # issue state, readiness, dependencies
+  mulch       # expertise and durable lessons
+  canopy      # prompts and prompt composition
+  sapling     # headless coding-runtime execution
+  overstory   # orchestration, worktrees, coordination
+  trellis     # repo-local specs, plans, handoffs, audit history
 ```
 
 That means Trellis can link to a Seeds issue with `seed: seed-123`, but it never becomes the issue tracker. It can store rendered templates, but it does not become the prompt system.
