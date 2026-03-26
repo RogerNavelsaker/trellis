@@ -32,6 +32,14 @@ function runtimeString(): string {
 	return `bun-${platform}`;
 }
 
+/** Set to true when -q/--quiet is present; suppresses mutation confirmation messages. */
+let quiet = false;
+
+/** Print a mutation confirmation message, respecting --quiet. */
+function printConfirm(message: string): void {
+	if (!quiet) console.log(message);
+}
+
 async function main(): Promise<void> {
 	if (shouldPrintVersionJson(process.argv.slice(2))) {
 		jsonOutput("version", {
@@ -81,7 +89,7 @@ async function main(): Promise<void> {
 					});
 					return;
 				}
-				console.log(chalk.green("Initialized .trellis/"));
+				printConfirm(chalk.green("Initialized .trellis/"));
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
 				if (opts.json) {
@@ -162,7 +170,7 @@ async function main(): Promise<void> {
 					jsonOutput("spec create", { spec: record });
 					return;
 				}
-				console.log(chalk.green(`Created spec ${record.id}`));
+				printConfirm(chalk.green(`Created spec ${record.id}`));
 			} catch (error) {
 				handleCommandError("spec create", error, global.json);
 			}
@@ -210,7 +218,7 @@ async function main(): Promise<void> {
 					jsonOutput("spec update", { spec: record });
 					return;
 				}
-				console.log(chalk.green(`Updated spec ${record.id}`));
+				printConfirm(chalk.green(`Updated spec ${record.id}`));
 			} catch (error) {
 				handleCommandError("spec update", error, global.json);
 			}
@@ -227,7 +235,7 @@ async function main(): Promise<void> {
 					jsonOutput("spec start", { spec });
 					return;
 				}
-				console.log(chalk.green(`Started spec ${spec.id}`));
+				printConfirm(chalk.green(`Started spec ${spec.id}`));
 			} catch (error) {
 				handleCommandError("spec start", error, global.json);
 			}
@@ -247,7 +255,7 @@ async function main(): Promise<void> {
 					jsonOutput("spec complete", { spec });
 					return;
 				}
-				console.log(chalk.green(`Completed spec ${spec.id}`));
+				printConfirm(chalk.green(`Completed spec ${spec.id}`));
 			} catch (error) {
 				handleCommandError("spec complete", error, global.json);
 			}
@@ -303,7 +311,7 @@ async function main(): Promise<void> {
 					jsonOutput("plan create", { plan: record });
 					return;
 				}
-				console.log(chalk.green(`Created plan ${record.id}`));
+				printConfirm(chalk.green(`Created plan ${record.id}`));
 			} catch (error) {
 				handleCommandError("plan create", error, global.json);
 			}
@@ -349,7 +357,7 @@ async function main(): Promise<void> {
 					jsonOutput("plan update", { plan: record });
 					return;
 				}
-				console.log(chalk.green(`Updated plan ${record.id}`));
+				printConfirm(chalk.green(`Updated plan ${record.id}`));
 			} catch (error) {
 				handleCommandError("plan update", error, global.json);
 			}
@@ -366,7 +374,7 @@ async function main(): Promise<void> {
 					jsonOutput("plan start", { plan });
 					return;
 				}
-				console.log(chalk.green(`Started plan ${plan.id}`));
+				printConfirm(chalk.green(`Started plan ${plan.id}`));
 			} catch (error) {
 				handleCommandError("plan start", error, global.json);
 			}
@@ -390,7 +398,7 @@ async function main(): Promise<void> {
 					jsonOutput("plan block", { plan });
 					return;
 				}
-				console.log(chalk.yellow(`Blocked plan ${plan.id}`));
+				printConfirm(chalk.yellow(`Blocked plan ${plan.id}`));
 			} catch (error) {
 				handleCommandError("plan block", error, global.json);
 			}
@@ -407,7 +415,7 @@ async function main(): Promise<void> {
 					jsonOutput("plan resume", { plan });
 					return;
 				}
-				console.log(chalk.green(`Resumed plan ${plan.id}`));
+				printConfirm(chalk.green(`Resumed plan ${plan.id}`));
 			} catch (error) {
 				handleCommandError("plan resume", error, global.json);
 			}
@@ -431,7 +439,7 @@ async function main(): Promise<void> {
 					jsonOutput("plan complete", { plan });
 					return;
 				}
-				console.log(chalk.green(`Completed plan ${plan.id}`));
+				printConfirm(chalk.green(`Completed plan ${plan.id}`));
 			} catch (error) {
 				handleCommandError("plan complete", error, global.json);
 			}
@@ -573,7 +581,7 @@ async function main(): Promise<void> {
 					jsonOutput("handoff append", { handoff: record });
 					return;
 				}
-				console.log(chalk.green(`Appended handoff for ${record.plan}`));
+				printConfirm(chalk.green(`Appended handoff for ${record.plan}`));
 			} catch (error) {
 				handleCommandError("handoff append", error, global.json);
 			}
@@ -709,7 +717,7 @@ async function main(): Promise<void> {
 					jsonOutput("template init", { written, count: written.length });
 					return;
 				}
-				for (const file of written) console.log(chalk.green(`Wrote ${file}`));
+				for (const file of written) printConfirm(chalk.green(`Wrote ${file}`));
 			} catch (error) {
 				handleCommandError("template init", error, global.json);
 			}
@@ -852,7 +860,16 @@ async function main(): Promise<void> {
 			});
 		});
 
+	program.hook("preAction", () => {
+		quiet = program.opts<{ quiet?: boolean }>().quiet ?? false;
+	});
+
+	const timingStart = process.argv.includes("--timing") ? performance.now() : undefined;
 	await program.parseAsync(process.argv);
+	if (timingStart !== undefined) {
+		const elapsed = performance.now() - timingStart;
+		process.stderr.write(`\ntiming: ${elapsed.toFixed(1)}ms\n`);
+	}
 }
 
 function collectValues(value: string, previous: string[]): string[] {

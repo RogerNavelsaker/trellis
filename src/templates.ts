@@ -74,8 +74,13 @@ export async function initTemplates(root: string): Promise<string[]> {
 	const written: string[] = [];
 	for (const kind of Object.keys(TEMPLATE_FILES) as TemplateKind[]) {
 		const target = templatePath(root, kind);
-		await writeFile(target, TEMPLATE_FILES[kind], "utf8");
-		written.push(target);
+		try {
+			await writeFile(target, TEMPLATE_FILES[kind], { encoding: "utf8", flag: "wx" });
+			written.push(target);
+		} catch (error) {
+			if (error instanceof Error && (error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+			// File already exists — skip to preserve user customizations.
+		}
 	}
 	return written;
 }

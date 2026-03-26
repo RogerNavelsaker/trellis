@@ -87,6 +87,9 @@ export async function readSpec(root: string, id: string): Promise<SpecRecord> {
 	try {
 		return parseSpec(await readFile(specPath(root, id), "utf8"));
 	} catch (error) {
+		if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT") {
+			throw new Error(`spec '${id}' not found`);
+		}
 		const message = error instanceof Error ? error.message : String(error);
 		throw new Error(`corrupt spec '${id}': ${message}`);
 	}

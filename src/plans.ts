@@ -92,6 +92,9 @@ export async function readPlan(root: string, id: string): Promise<PlanRecord> {
 	try {
 		return parsePlan(await readFile(planPath(root, id), "utf8"));
 	} catch (error) {
+		if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT") {
+			throw new Error(`plan '${id}' not found`);
+		}
 		const message = error instanceof Error ? error.message : String(error);
 		throw new Error(`corrupt plan '${id}': ${message}`);
 	}

@@ -39,11 +39,11 @@ export async function withWriteLock<T>(
 				throw error;
 			}
 			if (attempt === MAX_ATTEMPTS) {
-				throw new Error(`Timed out waiting for Trellis lock '${name}'`);
+				throw new Error(`timed out waiting for Trellis lock '${name}'`);
 			}
 			await delay(RETRY_DELAY_MS);
 		}
 	}
 
-	throw new Error(`Failed to acquire Trellis lock '${name}'`);
+	throw new Error(`failed to acquire Trellis lock '${name}'`);
 }
