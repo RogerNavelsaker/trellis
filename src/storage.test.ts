@@ -36,9 +36,7 @@ describe("Trellis storage", () => {
 		const record = await readSpec(tempDir, "spec-a");
 		expect(record.seed).toBe("seed-123");
 		expect(record.constraints).toEqual(["No new daemon", "Keep CLI-first UX"]);
-		expect((await listSpecs(tempDir)).map((spec) => spec.id)).toEqual([
-			"spec-a",
-		]);
+		expect((await listSpecs(tempDir)).map((spec) => spec.id)).toEqual(["spec-a"]);
 	});
 
 	test("creates, reads, and lists plans", async () => {
@@ -67,13 +65,8 @@ describe("Trellis storage", () => {
 
 		const record = await readPlan(tempDir, "plan-a");
 		expect(record.spec).toBe("spec-a");
-		expect(record.steps).toEqual([
-			"Ship storage changes",
-			"Ship CLI follow-up",
-		]);
-		expect((await listPlans(tempDir)).map((plan) => plan.id)).toEqual([
-			"plan-a",
-		]);
+		expect(record.steps).toEqual(["Ship storage changes", "Ship CLI follow-up"]);
+		expect((await listPlans(tempDir)).map((plan) => plan.id)).toEqual(["plan-a"]);
 	});
 
 	test("filters and updates specs", async () => {
@@ -109,12 +102,13 @@ describe("Trellis storage", () => {
 		expect(updated.status).toBe("active");
 		expect(updated.title).toBe("Auth redesign");
 		expect(updated.acceptance).toEqual(["Auth flow passes smoke test"]);
-		expect(
-			(await listSpecs(tempDir, { status: "active" })).map((spec) => spec.id),
-		).toEqual(["spec-a", "spec-b"]);
-		expect(
-			(await listSpecs(tempDir, { seed: "seed-123" })).map((spec) => spec.id),
-		).toEqual(["spec-a"]);
+		expect((await listSpecs(tempDir, { status: "active" })).map((spec) => spec.id)).toEqual([
+			"spec-a",
+			"spec-b",
+		]);
+		expect((await listSpecs(tempDir, { seed: "seed-123" })).map((spec) => spec.id)).toEqual([
+			"spec-a",
+		]);
 	});
 
 	test("filters and updates plans", async () => {
@@ -158,12 +152,13 @@ describe("Trellis storage", () => {
 		expect(updated.title).toBe("Auth rollout");
 		expect(updated.spec).toBe("spec-a");
 		expect(updated.steps).toEqual(["Ship storage changes", "Wire CLI flow"]);
-		expect(
-			(await listPlans(tempDir, { status: "active" })).map((plan) => plan.id),
-		).toEqual(["plan-a"]);
-		expect(
-			(await listPlans(tempDir, { spec: "spec-a" })).map((plan) => plan.id),
-		).toEqual(["plan-a", "plan-b"]);
+		expect((await listPlans(tempDir, { status: "active" })).map((plan) => plan.id)).toEqual([
+			"plan-a",
+		]);
+		expect((await listPlans(tempDir, { spec: "spec-a" })).map((plan) => plan.id)).toEqual([
+			"plan-a",
+			"plan-b",
+		]);
 	});
 
 	test("rejects invalid seeds and missing linked specs", async () => {

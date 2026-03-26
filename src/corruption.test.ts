@@ -70,8 +70,6 @@ describe("Trellis corruption handling", () => {
 			"utf8",
 		);
 
-		await expect(readEvents(tempDir)).rejects.toThrow(
-			"corrupt event log at line 2:",
-		);
+		await expect(readEvents(tempDir)).rejects.toThrow("corrupt event log at line 2:");
 	});
 });

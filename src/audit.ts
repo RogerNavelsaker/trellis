@@ -55,17 +55,12 @@ export async function auditStale(
 ): Promise<StaleArtifactAudit[]> {
 	const events = await readEvents(root);
 	const cutoffMs = days * 24 * 60 * 60 * 1000;
-	const specs = (await listSpecs(root)).filter(
-		(spec) => spec.status !== "done",
-	);
-	const plans = (await listPlans(root)).filter(
-		(plan) => plan.status !== "done",
-	);
+	const specs = (await listSpecs(root)).filter((spec) => spec.status !== "done");
+	const plans = (await listPlans(root)).filter((plan) => plan.status !== "done");
 	const records: StaleArtifactAudit[] = [];
 
 	for (const spec of specs) {
-		const lastActivityAt =
-			latestArtifactActivity(events, "spec", spec.id) ?? spec.updatedAt;
+		const lastActivityAt = latestArtifactActivity(events, "spec", spec.id) ?? spec.updatedAt;
 		const staleMs = now.getTime() - new Date(lastActivityAt).getTime();
 		if (staleMs >= cutoffMs) {
 			records.push({
@@ -80,8 +75,7 @@ export async function auditStale(
 	}
 
 	for (const plan of plans) {
-		const lastActivityAt =
-			latestArtifactActivity(events, "plan", plan.id) ?? plan.updatedAt;
+		const lastActivityAt = latestArtifactActivity(events, "plan", plan.id) ?? plan.updatedAt;
 		const staleMs = now.getTime() - new Date(lastActivityAt).getTime();
 		if (staleMs >= cutoffMs) {
 			records.push({
@@ -96,9 +90,7 @@ export async function auditStale(
 		}
 	}
 
-	return records.sort((left, right) =>
-		left.lastActivityAt.localeCompare(right.lastActivityAt),
-	);
+	return records.sort((left, right) => left.lastActivityAt.localeCompare(right.lastActivityAt));
 }
 
 export async function auditOrphaned(root: string): Promise<OrphanedAudit> {
@@ -106,9 +98,7 @@ export async function auditOrphaned(root: string): Promise<OrphanedAudit> {
 	const plans = await listPlans(root);
 	const planIds = new Set(plans.map((plan) => plan.id));
 
-	const specsWithoutPlans = specs.filter(
-		(spec) => !plans.some((plan) => plan.spec === spec.id),
-	);
+	const specsWithoutPlans = specs.filter((spec) => !plans.some((plan) => plan.spec === spec.id));
 	const plansWithMissingSpecs: PlanRecord[] = [];
 	for (const plan of plans) {
 		if (!plan.spec) continue;
@@ -131,12 +121,8 @@ export async function auditOrphaned(root: string): Promise<OrphanedAudit> {
 
 	return {
 		specsWithoutPlans,
-		plansWithMissingSpecs: plansWithMissingSpecs.sort((a, b) =>
-			a.id.localeCompare(b.id),
-		),
-		handoffsForMissingPlans: handoffsForMissingPlans.sort((a, b) =>
-			a.plan.localeCompare(b.plan),
-		),
+		plansWithMissingSpecs: plansWithMissingSpecs.sort((a, b) => a.id.localeCompare(b.id)),
+		handoffsForMissingPlans: handoffsForMissingPlans.sort((a, b) => a.plan.localeCompare(b.plan)),
 	};
 }
 

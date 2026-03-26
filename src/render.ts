@@ -5,10 +5,7 @@ const PLACEHOLDER_RE = /\{\{([a-z0-9_]+)\}\}/gi;
 export type RenderData = Record<string, string>;
 
 export function renderTemplateText(template: string, data: RenderData): string {
-	return template.replace(
-		PLACEHOLDER_RE,
-		(_, rawKey: string) => data[rawKey] ?? `{{${rawKey}}}`,
-	);
+	return template.replace(PLACEHOLDER_RE, (_, rawKey: string) => data[rawKey] ?? `{{${rawKey}}}`);
 }
 
 export async function renderTemplate(

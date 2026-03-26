@@ -42,15 +42,11 @@ export function parsePlan(text: string): PlanRecord {
 		title: String(parsed.title ?? ""),
 		seed: parsed.seed ? String(parsed.seed) : undefined,
 		spec: parsed.spec ? String(parsed.spec) : undefined,
-		status: (parsed.status
-			? String(parsed.status)
-			: "draft") as PlanRecord["status"],
+		status: (parsed.status ? String(parsed.status) : "draft") as PlanRecord["status"],
 		createdAt: String(parsed.createdAt ?? ""),
 		updatedAt: String(parsed.updatedAt ?? ""),
 		completedAt: parsed.completedAt ? String(parsed.completedAt) : undefined,
-		completionSummary: parsed.completionSummary
-			? String(parsed.completionSummary)
-			: undefined,
+		completionSummary: parsed.completionSummary ? String(parsed.completionSummary) : undefined,
 		summary: String(parsed.summary ?? ""),
 		steps: Array.isArray(parsed.steps) ? parsed.steps : [],
 	};
@@ -120,8 +116,7 @@ export async function updatePlan(
 ): Promise<PlanRecord> {
 	validatePlanStatus(patch.status);
 	validateSeed(patch.seed);
-	if (patch.title !== undefined && !patch.title.trim())
-		throw new Error("title must not be empty");
+	if (patch.title !== undefined && !patch.title.trim()) throw new Error("title must not be empty");
 	if (
 		patch.completionSummary !== undefined &&
 		patch.completionSummary !== null &&
@@ -146,21 +141,16 @@ export async function updatePlan(
 	});
 }
 
-export async function listPlans(
-	root: string,
-	filters: PlanFilters = {},
-): Promise<PlanRecord[]> {
+export async function listPlans(root: string, filters: PlanFilters = {}): Promise<PlanRecord[]> {
 	const dir = join(root, TRELLIS_DIR, PLANS_DIR);
-	const files = (
-		await readdir(dir, { withFileTypes: true }).catch(() => [])
-	).filter((entry) => entry.isFile() && entry.name.endsWith(".yaml"));
+	const files = (await readdir(dir, { withFileTypes: true }).catch(() => [])).filter(
+		(entry) => entry.isFile() && entry.name.endsWith(".yaml"),
+	);
 	const records = await Promise.all(
 		files.map((entry) => readPlan(root, entry.name.replace(/\.yaml$/, ""))),
 	);
 	return records
-		.filter((record) =>
-			filters.status ? record.status === filters.status : true,
-		)
+		.filter((record) => (filters.status ? record.status === filters.status : true))
 		.filter((record) => (filters.seed ? record.seed === filters.seed : true))
 		.filter((record) => (filters.spec ? record.spec === filters.spec : true))
 		.sort((left, right) => left.id.localeCompare(right.id));

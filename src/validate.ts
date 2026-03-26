@@ -17,15 +17,11 @@ export function validateSeed(seed: string | undefined): void {
 function validateId(id: string, field: string): void {
 	requireNonEmpty(id, field);
 	if (!/^[a-z0-9][a-z0-9._-]*$/i.test(id)) {
-		throw new Error(
-			`${field} must use letters, numbers, dots, underscores, or dashes`,
-		);
+		throw new Error(`${field} must use letters, numbers, dots, underscores, or dashes`);
 	}
 }
 
-export function validateSpecInput(
-	input: Omit<SpecRecord, "createdAt" | "updatedAt">,
-): void {
+export function validateSpecInput(input: Omit<SpecRecord, "createdAt" | "updatedAt">): void {
 	validateId(input.id, "spec id");
 	requireNonEmpty(input.title, "title");
 	requireNonEmpty(input.objective, "objective");
@@ -35,9 +31,7 @@ export function validateSpecInput(
 	}
 }
 
-export function validatePlanInput(
-	input: Omit<PlanRecord, "createdAt" | "updatedAt">,
-): void {
+export function validatePlanInput(input: Omit<PlanRecord, "createdAt" | "updatedAt">): void {
 	validateId(input.id, "plan id");
 	requireNonEmpty(input.title, "title");
 	validateSeed(input.seed);

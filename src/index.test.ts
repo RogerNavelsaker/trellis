@@ -3,12 +3,7 @@ import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { doctorProject } from "./doctor.ts";
-import {
-	initProject,
-	TRELLIS_EVENTS,
-	TRELLIS_GITIGNORE,
-	TRELLIS_README,
-} from "./init.ts";
+import { initProject, TRELLIS_EVENTS, TRELLIS_GITIGNORE, TRELLIS_README } from "./init.ts";
 
 describe("initProject", () => {
 	let tempDir: string | undefined;
@@ -25,27 +20,13 @@ describe("initProject", () => {
 
 		await initProject(tempDir);
 
-		expect(await Bun.file(join(tempDir, ".trellis", "README.md")).text()).toBe(
-			TRELLIS_README,
-		);
-		expect(await Bun.file(join(tempDir, ".trellis", ".gitignore")).text()).toBe(
-			TRELLIS_GITIGNORE,
-		);
-		expect((await stat(join(tempDir, ".trellis", "specs"))).isDirectory()).toBe(
-			true,
-		);
-		expect((await stat(join(tempDir, ".trellis", "plans"))).isDirectory()).toBe(
-			true,
-		);
-		expect(
-			(await stat(join(tempDir, ".trellis", "handoffs"))).isDirectory(),
-		).toBe(true);
-		expect(
-			(await stat(join(tempDir, ".trellis", "templates"))).isDirectory(),
-		).toBe(true);
-		expect(
-			await Bun.file(join(tempDir, ".trellis", TRELLIS_EVENTS)).text(),
-		).toBe("");
+		expect(await Bun.file(join(tempDir, ".trellis", "README.md")).text()).toBe(TRELLIS_README);
+		expect(await Bun.file(join(tempDir, ".trellis", ".gitignore")).text()).toBe(TRELLIS_GITIGNORE);
+		expect((await stat(join(tempDir, ".trellis", "specs"))).isDirectory()).toBe(true);
+		expect((await stat(join(tempDir, ".trellis", "plans"))).isDirectory()).toBe(true);
+		expect((await stat(join(tempDir, ".trellis", "handoffs"))).isDirectory()).toBe(true);
+		expect((await stat(join(tempDir, ".trellis", "templates"))).isDirectory()).toBe(true);
+		expect(await Bun.file(join(tempDir, ".trellis", TRELLIS_EVENTS)).text()).toBe("");
 	});
 });
 

@@ -60,24 +60,8 @@ export const TEMPLATE_PLACEHOLDERS: Record<TemplateKind, string[]> = {
 		"acceptance_1",
 		"reference_1",
 	],
-	plan: [
-		"plan_id",
-		"title",
-		"seed_id",
-		"spec_id",
-		"timestamp",
-		"summary",
-		"step_1",
-	],
-	handoff: [
-		"plan_id",
-		"spec_id",
-		"seed_id",
-		"from",
-		"to",
-		"summary",
-		"next_step_1",
-	],
+	plan: ["plan_id", "title", "seed_id", "spec_id", "timestamp", "summary", "step_1"],
+	handoff: ["plan_id", "spec_id", "seed_id", "from", "to", "summary", "next_step_1"],
 };
 
 function templatePath(root: string, kind: TemplateKind): string {
@@ -96,9 +80,6 @@ export async function initTemplates(root: string): Promise<string[]> {
 	return written;
 }
 
-export async function readTemplate(
-	root: string,
-	kind: TemplateKind,
-): Promise<string> {
+export async function readTemplate(root: string, kind: TemplateKind): Promise<string> {
 	return readFile(templatePath(root, kind), "utf8");
 }

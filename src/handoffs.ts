@@ -22,11 +22,7 @@ export async function appendHandoff(
 
 	await withWriteLock(root, `handoff-${record.plan}`, async () => {
 		await mkdir(join(root, TRELLIS_DIR, HANDOFFS_DIR), { recursive: true });
-		await appendFile(
-			handoffPath(root, record.plan),
-			`${JSON.stringify(record)}\n`,
-			"utf8",
-		);
+		await appendFile(handoffPath(root, record.plan), `${JSON.stringify(record)}\n`, "utf8");
 	});
 	await appendEvent(root, {
 		timestamp: record.timestamp,
@@ -44,10 +40,7 @@ export async function appendHandoff(
 	return record;
 }
 
-export async function readHandoffs(
-	root: string,
-	plan: string,
-): Promise<HandoffRecord[]> {
+export async function readHandoffs(root: string, plan: string): Promise<HandoffRecord[]> {
 	const text = await readFile(handoffPath(root, plan), "utf8").catch(() => "");
 	return text
 		.split("\n")
@@ -57,9 +50,7 @@ export async function readHandoffs(
 				return JSON.parse(line) as HandoffRecord;
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
-				throw new Error(
-					`corrupt handoff log '${plan}' at line ${index + 1}: ${message}`,
-				);
+				throw new Error(`corrupt handoff log '${plan}' at line ${index + 1}: ${message}`);
 			}
 		});
 }

@@ -10,10 +10,7 @@ function eventsPath(root: string): string {
 	return join(root, TRELLIS_DIR, EVENTS_FILE);
 }
 
-export async function appendEvent(
-	root: string,
-	event: EventRecord,
-): Promise<EventRecord> {
+export async function appendEvent(root: string, event: EventRecord): Promise<EventRecord> {
 	await withWriteLock(root, "events", async () => {
 		await mkdir(join(root, TRELLIS_DIR), { recursive: true });
 		await appendFile(eventsPath(root), `${JSON.stringify(event)}\n`, "utf8");

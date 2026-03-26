@@ -44,9 +44,7 @@ describe("Trellis lifecycle transitions", () => {
 			summary: "Spec outcome recorded",
 		});
 		expect((await readSpec(tempDir, "spec-a")).status).toBe("done");
-		expect((await readSpec(tempDir, "spec-a")).completionSummary).toBe(
-			"Spec outcome recorded",
-		);
+		expect((await readSpec(tempDir, "spec-a")).completionSummary).toBe("Spec outcome recorded");
 		expect((await readSpec(tempDir, "spec-a")).completedAt).toBeTruthy();
 
 		await expect(transitionSpec(tempDir, "spec-a", "active")).rejects.toThrow(
@@ -89,11 +87,9 @@ describe("Trellis lifecycle transitions", () => {
 		expect((await readHandoffs(tempDir, "plan-a")).at(-1)?.summary).toBe(
 			"Waiting for review bandwidth",
 		);
-		expect(
-			(await readEvents(tempDir)).some(
-				(event) => event.type === "plan.transition",
-			),
-		).toBe(true);
+		expect((await readEvents(tempDir)).some((event) => event.type === "plan.transition")).toBe(
+			true,
+		);
 
 		await transitionPlan(tempDir, "plan-a", "active");
 		await expect(transitionPlan(tempDir, "plan-a", "done")).rejects.toThrow(
@@ -105,9 +101,7 @@ describe("Trellis lifecycle transitions", () => {
 			to: "lead",
 		});
 		expect((await readPlan(tempDir, "plan-a")).status).toBe("done");
-		expect((await readPlan(tempDir, "plan-a")).completionSummary).toBe(
-			"Implementation merged",
-		);
+		expect((await readPlan(tempDir, "plan-a")).completionSummary).toBe("Implementation merged");
 		expect((await readPlan(tempDir, "plan-a")).completedAt).toBeTruthy();
 	});
 
@@ -139,8 +133,6 @@ describe("Trellis lifecycle transitions", () => {
 			transitionSpec(tempDir, "spec-a", "done", {
 				summary: "Attempted closure",
 			}),
-		).rejects.toThrow(
-			"spec 'spec-a' cannot complete until linked plans are done: plan-a",
-		);
+		).rejects.toThrow("spec 'spec-a' cannot complete until linked plans are done: plan-a");
 	});
 });

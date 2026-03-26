@@ -1,7 +1,4 @@
-export function jsonOutput(
-	command: string,
-	data: Record<string, unknown>,
-): void {
+export function jsonOutput(command: string, data: Record<string, unknown>): void {
 	console.log(JSON.stringify({ success: true, command, ...data }));
 }
 

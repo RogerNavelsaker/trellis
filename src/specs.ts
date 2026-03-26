@@ -41,15 +41,11 @@ export function parseSpec(text: string): SpecRecord {
 		id: String(parsed.id ?? ""),
 		title: String(parsed.title ?? ""),
 		seed: parsed.seed ? String(parsed.seed) : undefined,
-		status: (parsed.status
-			? String(parsed.status)
-			: "draft") as SpecRecord["status"],
+		status: (parsed.status ? String(parsed.status) : "draft") as SpecRecord["status"],
 		createdAt: String(parsed.createdAt ?? ""),
 		updatedAt: String(parsed.updatedAt ?? ""),
 		completedAt: parsed.completedAt ? String(parsed.completedAt) : undefined,
-		completionSummary: parsed.completionSummary
-			? String(parsed.completionSummary)
-			: undefined,
+		completionSummary: parsed.completionSummary ? String(parsed.completionSummary) : undefined,
 		objective: String(parsed.objective ?? ""),
 		constraints: Array.isArray(parsed.constraints) ? parsed.constraints : [],
 		acceptance: Array.isArray(parsed.acceptance) ? parsed.acceptance : [],
@@ -116,8 +112,7 @@ export async function updateSpec(
 ): Promise<SpecRecord> {
 	validateSpecStatus(patch.status);
 	validateSeed(patch.seed);
-	if (patch.title !== undefined && !patch.title.trim())
-		throw new Error("title must not be empty");
+	if (patch.title !== undefined && !patch.title.trim()) throw new Error("title must not be empty");
 	if (patch.objective !== undefined && !patch.objective.trim()) {
 		throw new Error("objective must not be empty");
 	}
@@ -140,21 +135,16 @@ export async function updateSpec(
 	});
 }
 
-export async function listSpecs(
-	root: string,
-	filters: SpecFilters = {},
-): Promise<SpecRecord[]> {
+export async function listSpecs(root: string, filters: SpecFilters = {}): Promise<SpecRecord[]> {
 	const dir = join(root, TRELLIS_DIR, SPECS_DIR);
-	const files = (
-		await readdir(dir, { withFileTypes: true }).catch(() => [])
-	).filter((entry) => entry.isFile() && entry.name.endsWith(".yaml"));
+	const files = (await readdir(dir, { withFileTypes: true }).catch(() => [])).filter(
+		(entry) => entry.isFile() && entry.name.endsWith(".yaml"),
+	);
 	const records = await Promise.all(
 		files.map((entry) => readSpec(root, entry.name.replace(/\.yaml$/, ""))),
 	);
 	return records
-		.filter((record) =>
-			filters.status ? record.status === filters.status : true,
-		)
+		.filter((record) => (filters.status ? record.status === filters.status : true))
 		.filter((record) => (filters.seed ? record.seed === filters.seed : true))
 		.sort((left, right) => left.id.localeCompare(right.id));
 }

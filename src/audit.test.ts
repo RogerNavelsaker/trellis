@@ -75,11 +75,7 @@ describe("Trellis audit views", () => {
 		await transitionSpec(tempDir, "spec-a", "active");
 		await transitionPlan(tempDir, "plan-a", "active");
 
-		const stale = await auditStale(
-			tempDir,
-			7,
-			new Date("2030-03-24T00:00:00.000Z"),
-		);
+		const stale = await auditStale(tempDir, 7, new Date("2030-03-24T00:00:00.000Z"));
 		expect(stale.map((entry) => entry.id).sort()).toEqual(["plan-a", "spec-a"]);
 	});
 
@@ -109,12 +105,8 @@ describe("Trellis audit views", () => {
 		);
 
 		const orphaned = await auditOrphaned(tempDir);
-		expect(orphaned.specsWithoutPlans.map((spec) => spec.id)).toEqual([
-			"spec-a",
-		]);
+		expect(orphaned.specsWithoutPlans.map((spec) => spec.id)).toEqual(["spec-a"]);
 		expect(orphaned.plansWithMissingSpecs).toEqual([]);
-		expect(orphaned.handoffsForMissingPlans).toEqual([
-			{ plan: "missing-plan", count: 1 },
-		]);
+		expect(orphaned.handoffsForMissingPlans).toEqual([{ plan: "missing-plan", count: 1 }]);
 	});
 });

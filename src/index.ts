@@ -47,19 +47,14 @@ async function main(): Promise<void> {
 
 	program
 		.name("trellis")
-		.description(
-			"Git-native specs, plans, and handoff artifacts for the os-eco toolchain",
-		)
+		.description("Git-native specs, plans, and handoff artifacts for the os-eco toolchain")
 		.showSuggestionAfterError()
 		.option("--json", "Machine-readable JSON output")
-		.option("--quiet, -q", "Suppress non-error output")
+		.option("-q, --quiet", "Suppress non-error output")
 		.option("--verbose", "Extra diagnostic output")
 		.option("--timing", "Print execution time to stderr")
 		.version(VERSION, "-v, --version", "Print version")
-		.addHelpText(
-			"before",
-			`trellis v${VERSION} — git-native specs, plans, and handoff artifacts\n`,
-		)
+		.addHelpText("before", `trellis v${VERSION} — git-native specs, plans, and handoff artifacts\n`)
 		.addHelpText(
 			"after",
 			[
@@ -195,24 +190,9 @@ async function main(): Promise<void> {
 		.option("--objective <text>", "Spec objective/body")
 		.option("--seed <seed>", "Linked Seeds issue ID")
 		.option("--status <status>", "draft | active | done")
-		.option(
-			"--constraint <text>",
-			"Replace constraints with repeated values",
-			collectValues,
-			[],
-		)
-		.option(
-			"--acceptance <text>",
-			"Replace acceptance with repeated values",
-			collectValues,
-			[],
-		)
-		.option(
-			"--reference <text>",
-			"Replace references with repeated values",
-			collectValues,
-			[],
-		)
+		.option("--constraint <text>", "Replace constraints with repeated values", collectValues, [])
+		.option("--acceptance <text>", "Replace acceptance with repeated values", collectValues, [])
+		.option("--reference <text>", "Replace references with repeated values", collectValues, [])
 		.action(async (id: string, opts) => {
 			const global = program.opts<{ json?: boolean }>();
 			try {
@@ -221,15 +201,9 @@ async function main(): Promise<void> {
 					objective: opts.objective,
 					seed: opts.seed,
 					status: opts.status,
-					constraints: hasExplicitArrayOption(opts.constraint)
-						? opts.constraint
-						: undefined,
-					acceptance: hasExplicitArrayOption(opts.acceptance)
-						? opts.acceptance
-						: undefined,
-					references: hasExplicitArrayOption(opts.reference)
-						? opts.reference
-						: undefined,
+					constraints: hasExplicitArrayOption(opts.constraint) ? opts.constraint : undefined,
+					acceptance: hasExplicitArrayOption(opts.acceptance) ? opts.acceptance : undefined,
+					references: hasExplicitArrayOption(opts.reference) ? opts.reference : undefined,
 				};
 				const record = await updateSpec(cwd(), id, patch);
 				if (global.json) {
@@ -261,10 +235,7 @@ async function main(): Promise<void> {
 	spec
 		.command("complete")
 		.argument("<id>", "Spec identifier")
-		.requiredOption(
-			"--summary <text>",
-			"Outcome summary for the completed spec",
-		)
+		.requiredOption("--summary <text>", "Outcome summary for the completed spec")
 		.description("Transition a spec from active to done")
 		.action(async (id: string, opts) => {
 			const global = program.opts<{ json?: boolean }>();
@@ -361,12 +332,7 @@ async function main(): Promise<void> {
 		.option("--spec <spec>", "Linked Trellis spec ID")
 		.option("--status <status>", "draft | active | blocked | done")
 		.option("--summary <text>", "Plan summary")
-		.option(
-			"--step <text>",
-			"Replace steps with repeated values",
-			collectValues,
-			[],
-		)
+		.option("--step <text>", "Replace steps with repeated values", collectValues, [])
 		.action(async (id: string, opts) => {
 			const global = program.opts<{ json?: boolean }>();
 			try {
@@ -449,10 +415,7 @@ async function main(): Promise<void> {
 	plan
 		.command("complete")
 		.argument("<id>", "Plan identifier")
-		.requiredOption(
-			"--summary <text>",
-			"Outcome summary for the completed plan",
-		)
+		.requiredOption("--summary <text>", "Outcome summary for the completed plan")
 		.option("--from <name>", "Actor recording completion")
 		.option("--to <name>", "Optional recipient for completion handoff")
 		.description("Transition a plan into done")
@@ -489,9 +452,7 @@ async function main(): Promise<void> {
 					return;
 				}
 				for (const entry of blocked) {
-					const reason = entry.latestBlockReason
-						? ` reason=${entry.latestBlockReason}`
-						: "";
+					const reason = entry.latestBlockReason ? ` reason=${entry.latestBlockReason}` : "";
 					const since = entry.blockedAt ? ` blockedAt=${entry.blockedAt}` : "";
 					console.log(
 						`${chalk.yellow(entry.plan.id)} spec=${entry.plan.spec ?? "-"}${since}${reason}`,
@@ -547,9 +508,7 @@ async function main(): Promise<void> {
 					console.log(`${chalk.yellow(`spec:${spec.id}`)} no linked plans`);
 				}
 				for (const plan of orphaned.plansWithMissingSpecs) {
-					console.log(
-						`${chalk.yellow(`plan:${plan.id}`)} missing spec=${plan.spec}`,
-					);
+					console.log(`${chalk.yellow(`plan:${plan.id}`)} missing spec=${plan.spec}`);
 				}
 				for (const handoff of orphaned.handoffsForMissingPlans) {
 					console.log(
@@ -590,9 +549,7 @@ async function main(): Promise<void> {
 			}
 		});
 
-	const handoff = program
-		.command("handoff")
-		.description("Append and inspect handoff logs");
+	const handoff = program.command("handoff").description("Append and inspect handoff logs");
 	handoff
 		.command("append")
 		.argument("<plan>", "Plan identifier")
@@ -627,35 +584,30 @@ async function main(): Promise<void> {
 		.option("--from <name>", "Filter by sender")
 		.option("--to <name>", "Filter by recipient")
 		.option("--limit <count>", "Limit results", parseInteger)
-		.action(
-			async (
-				planId: string,
-				opts: { from?: string; to?: string; limit?: number },
-			) => {
-				const global = program.opts<{ json?: boolean }>();
-				try {
-					const records = (await readHandoffs(cwd(), planId))
-						.filter((record) => (opts.from ? record.from === opts.from : true))
-						.filter((record) => (opts.to ? record.to === opts.to : true))
-						.slice(opts.limit ? -opts.limit : undefined);
-					if (global.json) {
-						jsonOutput("handoff show", {
-							plan: planId,
-							handoffs: records,
-							count: records.length,
-						});
-						return;
-					}
-					for (const record of records) {
-						console.log(
-							`${chalk.cyan(record.timestamp)} ${record.from} -> ${record.to}: ${record.summary}`,
-						);
-					}
-				} catch (error) {
-					handleCommandError("handoff show", error, global.json);
+		.action(async (planId: string, opts: { from?: string; to?: string; limit?: number }) => {
+			const global = program.opts<{ json?: boolean }>();
+			try {
+				const records = (await readHandoffs(cwd(), planId))
+					.filter((record) => (opts.from ? record.from === opts.from : true))
+					.filter((record) => (opts.to ? record.to === opts.to : true))
+					.slice(opts.limit ? -opts.limit : undefined);
+				if (global.json) {
+					jsonOutput("handoff show", {
+						plan: planId,
+						handoffs: records,
+						count: records.length,
+					});
+					return;
 				}
-			},
-		);
+				for (const record of records) {
+					console.log(
+						`${chalk.cyan(record.timestamp)} ${record.from} -> ${record.to}: ${record.summary}`,
+					);
+				}
+			} catch (error) {
+				handleCommandError("handoff show", error, global.json);
+			}
+		});
 	handoff
 		.command("latest")
 		.argument("<plan>", "Plan identifier")
@@ -691,12 +643,8 @@ async function main(): Promise<void> {
 		.action(async (opts) => {
 			const global = program.opts<{ json?: boolean }>();
 			try {
-				const plans = opts.plan
-					? [opts.plan]
-					: (await listPlans(cwd())).map((plan) => plan.id);
-				const records = (
-					await Promise.all(plans.map((planId) => readHandoffs(cwd(), planId)))
-				)
+				const plans = opts.plan ? [opts.plan] : (await listPlans(cwd())).map((plan) => plan.id);
+				const records = (await Promise.all(plans.map((planId) => readHandoffs(cwd(), planId))))
 					.flat()
 					.filter((record) => (opts.from ? record.from === opts.from : true))
 					.filter((record) => (opts.to ? record.to === opts.to : true))
@@ -720,9 +668,7 @@ async function main(): Promise<void> {
 			}
 		});
 
-	const event = program
-		.command("event")
-		.description("Query Trellis event history");
+	const event = program.command("event").description("Query Trellis event history");
 	event
 		.command("list")
 		.option("--kind <kind>", "Filter by artifact kind")
@@ -733,13 +679,9 @@ async function main(): Promise<void> {
 			const global = program.opts<{ json?: boolean }>();
 			try {
 				const records = (await readEvents(cwd()))
-					.filter((record) =>
-						opts.kind ? record.artifactKind === opts.kind : true,
-					)
+					.filter((record) => (opts.kind ? record.artifactKind === opts.kind : true))
 					.filter((record) => (opts.type ? record.type === opts.type : true))
-					.filter((record) =>
-						opts.artifact ? record.artifactId === opts.artifact : true,
-					)
+					.filter((record) => (opts.artifact ? record.artifactId === opts.artifact : true))
 					.slice(opts.limit ? -opts.limit : undefined);
 				if (global.json) {
 					jsonOutput("event list", { events: records, count: records.length });
@@ -755,14 +697,10 @@ async function main(): Promise<void> {
 			}
 		});
 
-	const template = program
-		.command("template")
-		.description("Manage Trellis templates");
+	const template = program.command("template").description("Manage Trellis templates");
 	template
 		.command("init")
-		.description(
-			"Write default spec, plan, and handoff templates into .trellis/templates",
-		)
+		.description("Write default spec, plan, and handoff templates into .trellis/templates")
 		.action(async () => {
 			const global = program.opts<{ json?: boolean }>();
 			try {
@@ -795,9 +733,7 @@ async function main(): Promise<void> {
 	template
 		.command("placeholders")
 		.argument("<kind>", "Template kind: spec, plan, or handoff")
-		.description(
-			"List the stable placeholders Trellis guarantees for a template kind",
-		)
+		.description("List the stable placeholders Trellis guarantees for a template kind")
 		.action((kind: TemplateKind) => {
 			const global = program.opts<{ json?: boolean }>();
 			try {
@@ -837,9 +773,7 @@ async function main(): Promise<void> {
 	program
 		.command("show")
 		.argument("<id>", "Spec or plan identifier")
-		.description(
-			"Show a Trellis artifact without knowing whether it is a spec or a plan",
-		)
+		.description("Show a Trellis artifact without knowing whether it is a spec or a plan")
 		.action(async (id: string) => {
 			const global = program.opts<{ json?: boolean }>();
 			try {
@@ -889,12 +823,8 @@ async function main(): Promise<void> {
 			try {
 				const resolved = await resolveArtifact(cwd(), id);
 				const events = (await readEvents(cwd())).filter((event) => {
-					if (resolved.kind === "plan")
-						return event.artifactId === resolved.plan.id;
-					return (
-						event.artifactId === resolved.spec.id ||
-						event.spec === resolved.spec.id
-					);
+					if (resolved.kind === "plan") return event.artifactId === resolved.plan.id;
+					return event.artifactId === resolved.spec.id || event.spec === resolved.spec.id;
 				});
 				const handoffs =
 					resolved.kind === "plan"
@@ -939,8 +869,7 @@ function shouldPrintVersionJson(args: string[]): boolean {
 
 function parseInteger(value: string): number {
 	const parsed = Number.parseInt(value, 10);
-	if (!Number.isFinite(parsed) || parsed < 1)
-		throw new Error("limit must be a positive integer");
+	if (!Number.isFinite(parsed) || parsed < 1) throw new Error("limit must be a positive integer");
 	return parsed;
 }
 
@@ -948,8 +877,7 @@ function parseKeyValuePairs(values: string[]): Record<string, string> {
 	return Object.fromEntries(
 		values.map((entry) => {
 			const separator = entry.indexOf("=");
-			if (separator === -1)
-				throw new Error(`invalid --data pair '${entry}', expected key=value`);
+			if (separator === -1) throw new Error(`invalid --data pair '${entry}', expected key=value`);
 			return [entry.slice(0, separator), entry.slice(separator + 1)];
 		}),
 	);
@@ -992,15 +920,10 @@ function completionScript(shell: string): string {
 			].join("\n");
 		case "fish":
 			return commandWords
-				.map(
-					(word) =>
-						`complete -c trellis -f -a ${word}\ncomplete -c tl -f -a ${word}`,
-				)
+				.map((word) => `complete -c trellis -f -a ${word}\ncomplete -c tl -f -a ${word}`)
 				.join("\n");
 		default:
-			throw new Error(
-				`unsupported shell '${shell}', expected bash, zsh, or fish`,
-			);
+			throw new Error(`unsupported shell '${shell}', expected bash, zsh, or fish`);
 	}
 }
 
@@ -1036,18 +959,14 @@ function formatTimelineForDisplay(
 	}
 	lines.push("");
 	lines.push("events:");
-	for (const event of [...record.events].sort((a, b) =>
-		a.timestamp.localeCompare(b.timestamp),
-	)) {
+	for (const event of [...record.events].sort((a, b) => a.timestamp.localeCompare(b.timestamp))) {
 		lines.push(formatEventLine(event));
 	}
 	if (record.events.length === 0) lines.push("(none)");
 	return lines.join("\n");
 }
 
-function formatEventLine(
-	event: Awaited<ReturnType<typeof readEvents>>[number],
-): string {
+function formatEventLine(event: Awaited<ReturnType<typeof readEvents>>[number]): string {
 	switch (event.type) {
 		case "spec.transition":
 		case "plan.transition": {
@@ -1059,16 +978,12 @@ function formatEventLine(
 	}
 }
 
-function formatSpecSummary(
-	record: Awaited<ReturnType<typeof readSpec>>,
-): string {
+function formatSpecSummary(record: Awaited<ReturnType<typeof readSpec>>): string {
 	const seed = record.seed ? ` seed=${record.seed}` : "";
 	return `${chalk.cyan(record.id)} [${record.status}]${seed} ${record.title}`;
 }
 
-function formatPlanSummary(
-	record: Awaited<ReturnType<typeof readPlan>>,
-): string {
+function formatPlanSummary(record: Awaited<ReturnType<typeof readPlan>>): string {
 	const seed = record.seed ? ` seed=${record.seed}` : "";
 	const spec = record.spec ? ` spec=${record.spec}` : "";
 	return `${chalk.cyan(record.id)} [${record.status}]${seed}${spec} ${record.title}`;
@@ -1096,9 +1011,7 @@ async function resolveArtifact(
 	} catch {}
 	try {
 		const plan = await readPlan(root, id);
-		const linkedSpec = plan.spec
-			? await readSpec(root, plan.spec).catch(() => null)
-			: null;
+		const linkedSpec = plan.spec ? await readSpec(root, plan.spec).catch(() => null) : null;
 		return { kind: "plan", plan, linkedSpec };
 	} catch {}
 	throw new Error(`No spec or plan found for '${id}'`);
@@ -1106,17 +1019,11 @@ async function resolveArtifact(
 
 async function readLinkedPlanHandoffs(root: string, specId: string) {
 	const linkedPlans = await listPlans(root, { spec: specId });
-	const handoffs = await Promise.all(
-		linkedPlans.map((plan) => readHandoffs(root, plan.id)),
-	);
+	const handoffs = await Promise.all(linkedPlans.map((plan) => readHandoffs(root, plan.id)));
 	return handoffs.flat();
 }
 
-function handleCommandError(
-	command: string,
-	error: unknown,
-	json: boolean | undefined,
-): void {
+function handleCommandError(command: string, error: unknown, json: boolean | undefined): void {
 	const message = error instanceof Error ? error.message : String(error);
 	if (json) {
 		jsonError(command, message);

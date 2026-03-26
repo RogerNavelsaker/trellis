@@ -17,14 +17,11 @@ describe("trellis CLI smoke", () => {
 		tempDir = await mkdtemp(join(tmpdir(), "trellis-cli-"));
 
 		const run = async (args: string[]) => {
-			const proc = Bun.spawn(
-				["bun", "/home/rona/Repositories/trellis/src/index.ts", ...args],
-				{
-					cwd: tempDir,
-					stdout: "pipe",
-					stderr: "pipe",
-				},
-			);
+			const proc = Bun.spawn(["bun", join(import.meta.dir, "index.ts"), ...args], {
+				cwd: tempDir,
+				stdout: "pipe",
+				stderr: "pipe",
+			});
 			const stdout = await new Response(proc.stdout).text();
 			const stderr = await new Response(proc.stderr).text();
 			const exitCode = await proc.exited;
@@ -116,25 +113,17 @@ describe("trellis CLI smoke", () => {
 		const show = JSON.parse((await run(["show", "plan-a", "--json"])).stdout);
 		expect(show.kind).toBe("plan");
 
-		const inspect = JSON.parse(
-			(await run(["inspect", "spec-a", "--json"])).stdout,
-		);
+		const inspect = JSON.parse((await run(["inspect", "spec-a", "--json"])).stdout);
 		expect(inspect.kind).toBe("spec");
 		expect(inspect.handoffCount).toBe(2);
 
-		const latest = JSON.parse(
-			(await run(["handoff", "latest", "plan-a", "--json"])).stdout,
-		);
+		const latest = JSON.parse((await run(["handoff", "latest", "plan-a", "--json"])).stdout);
 		expect(latest.handoff.summary).toBe("Waiting on review");
 
-		const timeline = JSON.parse(
-			(await run(["timeline", "plan-a", "--json"])).stdout,
-		);
+		const timeline = JSON.parse((await run(["timeline", "plan-a", "--json"])).stdout);
 		expect(Array.isArray(timeline.events)).toBe(true);
 
-		const blocked = JSON.parse(
-			(await run(["audit", "blocked", "--json"])).stdout,
-		);
+		const blocked = JSON.parse((await run(["audit", "blocked", "--json"])).stdout);
 		expect(blocked.count).toBe(1);
 
 		const version = JSON.parse((await run(["--version", "--json"])).stdout);
@@ -143,8 +132,6 @@ describe("trellis CLI smoke", () => {
 		expect(version.name).toBe("@os-eco/trellis-cli");
 
 		const bashCompletions = await run(["completions", "bash"]);
-		expect(bashCompletions.stdout).toContain(
-			"complete -F _trellis_completions",
-		);
+		expect(bashCompletions.stdout).toContain("complete -F _trellis_completions");
 	});
 });
