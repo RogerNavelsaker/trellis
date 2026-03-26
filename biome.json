@@ -1,7 +1,15 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
 	"files": {
-		"includes": ["src/**", "!**/node_modules"]
+		"includes": [
+			"**",
+			"!**/.seeds",
+			"!**/.claude",
+			"!**/.overstory",
+			"!**/.pi",
+			"!**/.sapling",
+			"!**/node_modules"
+		]
 	},
 	"assist": { "actions": { "source": { "organizeImports": "on" } } },
 	"linter": {

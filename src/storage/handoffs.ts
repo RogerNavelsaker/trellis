@@ -1,16 +1,22 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { appendFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
+import { TRELLIS_DIR } from "../system/init.ts";
+import { withWriteLock } from "../system/lock.ts";
+import type { HandoffRecord } from "../types.ts";
 import { appendEvent } from "./events.ts";
-import { TRELLIS_DIR } from "./init.ts";
-import { withWriteLock } from "./lock.ts";
-import type { HandoffRecord } from "./types.ts";
 
 const HANDOFFS_DIR = "handoffs";
 
+/**
+ * Returns the absolute path to a plan's handoff JSONL log.
+ */
 function handoffPath(root: string, plan: string): string {
 	return join(root, TRELLIS_DIR, HANDOFFS_DIR, `${plan}.jsonl`);
 }
 
+/**
+ * Appends a new handoff record to a plan's log and records the event.
+ */
 export async function appendHandoff(
 	root: string,
 	input: Omit<HandoffRecord, "timestamp">,
@@ -21,9 +27,11 @@ export async function appendHandoff(
 	};
 
 	await withWriteLock(root, `handoff-${record.plan}`, async () => {
-		await mkdir(join(root, TRELLIS_DIR, HANDOFFS_DIR), { recursive: true });
+		const dir = join(root, TRELLIS_DIR, HANDOFFS_DIR);
+		await mkdir(dir, { recursive: true });
 		await appendFile(handoffPath(root, record.plan), `${JSON.stringify(record)}\n`, "utf8");
 	});
+
 	await appendEvent(root, {
 		timestamp: record.timestamp,
 		type: "handoff.append",
@@ -40,8 +48,14 @@ export async function appendHandoff(
 	return record;
 }
 
+/**
+ * Reads and parses all handoff records for a specific plan.
+ */
 export async function readHandoffs(root: string, plan: string): Promise<HandoffRecord[]> {
-	const text = await readFile(handoffPath(root, plan), "utf8").catch(() => "");
+	const file = Bun.file(handoffPath(root, plan));
+	if (!(await file.exists())) return [];
+
+	const text = await file.text();
 	return text
 		.split("\n")
 		.filter(Boolean)

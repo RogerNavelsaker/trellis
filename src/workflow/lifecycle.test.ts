@@ -2,11 +2,11 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readEvents } from "./events.ts";
-import { readHandoffs } from "./handoffs.ts";
-import { initProject } from "./init.ts";
-import { createPlan, readPlan } from "./plans.ts";
-import { createSpec, readSpec } from "./specs.ts";
+import { readEvents } from "../storage/events.ts";
+import { readHandoffs } from "../storage/handoffs.ts";
+import { createPlan, readPlan } from "../storage/plans.ts";
+import { createSpec, readSpec } from "../storage/specs.ts";
+import { initProject } from "../system/init.ts";
 import { transitionPlan, transitionSpec } from "./transitions.ts";
 
 describe("Trellis lifecycle transitions", () => {
@@ -35,7 +35,9 @@ describe("Trellis lifecycle transitions", () => {
 
 		await transitionSpec(tempDir, "spec-a", "active");
 		expect((await readSpec(tempDir, "spec-a")).status).toBe("active");
-		expect((await readEvents(tempDir)).at(-1)?.type).toBe("spec.transition");
+		const activeEvent = (await readEvents(tempDir)).at(-1);
+		expect(activeEvent?.type).toBe("spec.transition");
+		expect(activeEvent?.spec).toBe("spec-a");
 
 		await expect(transitionSpec(tempDir, "spec-a", "done")).rejects.toThrow(
 			"completing a spec requires --summary",
@@ -103,6 +105,9 @@ describe("Trellis lifecycle transitions", () => {
 		expect((await readPlan(tempDir, "plan-a")).status).toBe("done");
 		expect((await readPlan(tempDir, "plan-a")).completionSummary).toBe("Implementation merged");
 		expect((await readPlan(tempDir, "plan-a")).completedAt).toBeTruthy();
+		// plan complete with actor+to should also record a durable handoff
+		expect((await readHandoffs(tempDir, "plan-a")).at(-1)?.summary).toBe("Implementation merged");
+		expect((await readHandoffs(tempDir, "plan-a")).at(-1)?.from).toBe("reviewer");
 	});
 
 	test("spec completion is blocked until linked plans are done", async () => {

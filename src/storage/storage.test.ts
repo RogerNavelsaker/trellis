@@ -2,11 +2,11 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { initProject } from "../system/init.ts";
+import { initTemplates, readTemplate } from "../system/templates.ts";
 import { appendHandoff, readHandoffs } from "./handoffs.ts";
-import { initProject } from "./init.ts";
 import { createPlan, listPlans, readPlan, updatePlan } from "./plans.ts";
 import { createSpec, listSpecs, readSpec, updateSpec } from "./specs.ts";
-import { initTemplates, readTemplate } from "./templates.ts";
 
 describe("Trellis storage", () => {
 	let tempDir: string | undefined;
@@ -225,6 +225,6 @@ describe("Trellis storage", () => {
 		const written = await initTemplates(tempDir);
 		expect(written).toHaveLength(3);
 		expect(await readTemplate(tempDir, "spec")).toContain("{{spec_id}}");
-		expect(await readTemplate(tempDir, "handoff")).toContain("## Summary");
+		expect(await readTemplate(tempDir, "handoff")).toContain("## Next Steps");
 	});
 });

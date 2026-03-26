@@ -3,14 +3,13 @@
 		"target": "ES2022",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"allowImportingTsExtensions": true,
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"noFallthroughCasesInSwitch": true,
+		"allowImportingTsExtensions": true,
+		"noEmit": true,
 		"isolatedModules": true,
-		"skipLibCheck": true,
-		"types": ["bun"],
-		"noEmit": true
+		"types": ["bun-types"]
 	},
-	"include": ["src/**/*.ts"]
+	"include": ["src/**/*", "scripts/**/*"]
 }

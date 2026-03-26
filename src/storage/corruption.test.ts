@@ -2,9 +2,9 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { initProject } from "../system/init.ts";
 import { readEvents } from "./events.ts";
 import { readHandoffs } from "./handoffs.ts";
-import { initProject } from "./init.ts";
 import { readPlan } from "./plans.ts";
 import { readSpec } from "./specs.ts";
 

@@ -1,7 +1,8 @@
-import { appendEvent } from "./events.ts";
-import { appendHandoff } from "./handoffs.ts";
-import { listPlans, readPlan, updatePlan } from "./plans.ts";
-import { readSpec, updateSpec } from "./specs.ts";
+import { appendEvent } from "../storage/events.ts";
+import { appendHandoff } from "../storage/handoffs.ts";
+import { listPlans, readPlan, updatePlan } from "../storage/plans.ts";
+import { readSpec, updateSpec } from "../storage/specs.ts";
+import { TransitionError, ValidationError } from "../system/errors.ts";
 
 const SPEC_TRANSITIONS: Record<string, readonly string[]> = {
 	draft: ["active"],
@@ -24,7 +25,7 @@ function ensureTransition(
 ): void {
 	if (current === target) return;
 	if (!table[current]?.includes(target)) {
-		throw new Error(`${label} cannot transition from ${current} to ${target}`);
+		throw new TransitionError(`${label} cannot transition from ${current} to ${target}`);
 	}
 }
 
@@ -38,12 +39,12 @@ export async function transitionSpec(
 	ensureTransition("spec", current.status, status, SPEC_TRANSITIONS);
 	if (status === "done") {
 		if (!options.summary?.trim()) {
-			throw new Error("completing a spec requires --summary");
+			throw new ValidationError("completing a spec requires --summary");
 		}
 		const linkedPlans = await listPlans(root, { spec: id });
 		const incomplete = linkedPlans.filter((plan) => plan.status !== "done");
 		if (incomplete.length > 0) {
-			throw new Error(
+			throw new ValidationError(
 				`spec '${id}' cannot complete until linked plans are done: ${incomplete.map((plan) => plan.id).join(", ")}`,
 			);
 		}
@@ -60,6 +61,7 @@ export async function transitionSpec(
 		artifactId: updated.id,
 		fromStatus: current.status,
 		toStatus: updated.status,
+		spec: updated.id,
 		summary: updated.completionSummary,
 		seed: updated.seed,
 	});
@@ -80,10 +82,10 @@ export async function transitionPlan(
 	const current = await readPlan(root, id);
 	ensureTransition("plan", current.status, status, PLAN_TRANSITIONS);
 	if (status === "blocked" && !options.reason?.trim()) {
-		throw new Error("blocking a plan requires --reason");
+		throw new ValidationError("blocking a plan requires --reason");
 	}
 	if (status === "done" && !options.summary?.trim()) {
-		throw new Error("completing a plan requires --summary");
+		throw new ValidationError("completing a plan requires --summary");
 	}
 	const updated = await updatePlan(root, id, {
 		status,
@@ -102,12 +104,13 @@ export async function transitionPlan(
 		plan: updated.id,
 		summary: options.summary ?? options.reason,
 	});
-	if (options.reason && options.actor && options.to) {
+	const handoffSummary = options.summary ?? options.reason;
+	if (handoffSummary && options.actor && options.to) {
 		await appendHandoff(root, {
 			plan: updated.id,
 			from: options.actor,
 			to: options.to,
-			summary: options.reason,
+			summary: handoffSummary,
 			spec: updated.spec,
 			seed: updated.seed,
 		});

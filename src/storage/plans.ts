@@ -1,10 +1,10 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { TRELLIS_DIR } from "./init.ts";
-import { withWriteLock } from "./lock.ts";
-import { compactPatch } from "./patch.ts";
+import { TRELLIS_DIR } from "../system/init.ts";
+import { withWriteLock } from "../system/lock.ts";
+import type { PlanRecord } from "../types.ts";
+import { compactPatch } from "../workflow/patch.ts";
 import { readSpec } from "./specs.ts";
-import type { PlanRecord } from "./types.ts";
 import {
 	validatePlanInput,
 	validatePlanStatus,
@@ -15,10 +15,12 @@ import { parseYaml, serializeYaml } from "./yaml.ts";
 
 const PLANS_DIR = "plans";
 
+/** Returns the absolute path to a plan file given its ID. */
 function planPath(root: string, id: string): string {
 	return join(root, TRELLIS_DIR, PLANS_DIR, `${id}.yaml`);
 }
 
+/** Serialize a PlanRecord to YAML. */
 export function serializePlan(record: PlanRecord): string {
 	return serializeYaml({
 		id: record.id,
@@ -35,6 +37,7 @@ export function serializePlan(record: PlanRecord): string {
 	});
 }
 
+/** Parse a PlanRecord from YAML text. Validates the structure. */
 export function parsePlan(text: string): PlanRecord {
 	const parsed = parseYaml(text);
 	const record: PlanRecord = {
@@ -54,6 +57,10 @@ export function parsePlan(text: string): PlanRecord {
 	return record;
 }
 
+/**
+ * Create a new plan file.
+ * Throws if the file already exists or if the linked spec does not exist.
+ */
 export async function createPlan(
 	root: string,
 	input: Omit<PlanRecord, "createdAt" | "updatedAt">,
@@ -72,11 +79,12 @@ export async function createPlan(
 	};
 
 	await withWriteLock(root, "plans", async () => {
+		const path = planPath(root, record.id);
+		if (await Bun.file(path).exists()) {
+			throw new Error(`plan '${record.id}' already exists`);
+		}
 		await mkdir(join(root, TRELLIS_DIR, PLANS_DIR), { recursive: true });
-		await writeFile(planPath(root, record.id), serializePlan(record), {
-			encoding: "utf8",
-			flag: "wx",
-		});
+		await Bun.write(path, serializePlan(record));
 	});
 
 	return record;
@@ -88,18 +96,25 @@ export interface PlanFilters {
 	spec?: string;
 }
 
+/** Read a plan from disk by ID. */
 export async function readPlan(root: string, id: string): Promise<PlanRecord> {
+	const path = planPath(root, id);
+	const file = Bun.file(path);
+	if (!(await file.exists())) {
+		throw new Error(`plan '${id}' not found`);
+	}
 	try {
-		return parsePlan(await readFile(planPath(root, id), "utf8"));
+		return parsePlan(await file.text());
 	} catch (error) {
-		if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT") {
-			throw new Error(`plan '${id}' not found`);
-		}
 		const message = error instanceof Error ? error.message : String(error);
 		throw new Error(`corrupt plan '${id}': ${message}`);
 	}
 }
 
+/**
+ * Update an existing plan.
+ * Applies a partial patch and updates the updatedAt timestamp.
+ */
 export async function updatePlan(
 	root: string,
 	id: string,
@@ -139,11 +154,12 @@ export async function updatePlan(
 			...compactPatch(patch),
 			updatedAt: new Date().toISOString(),
 		};
-		await writeFile(planPath(root, id), serializePlan(updated), "utf8");
+		await Bun.write(planPath(root, id), serializePlan(updated));
 		return updated;
 	});
 }
 
+/** List all plans in the project, optionally filtered by status, seed, or spec. */
 export async function listPlans(root: string, filters: PlanFilters = {}): Promise<PlanRecord[]> {
 	const dir = join(root, TRELLIS_DIR, PLANS_DIR);
 	const files = (await readdir(dir, { withFileTypes: true }).catch(() => [])).filter(

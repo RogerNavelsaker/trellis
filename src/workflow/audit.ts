@@ -1,34 +1,59 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { readEvents } from "./events.ts";
-import { readHandoffs } from "./handoffs.ts";
-import { TRELLIS_DIR } from "./init.ts";
-import { listPlans } from "./plans.ts";
-import { listSpecs } from "./specs.ts";
-import type { EventRecord, PlanRecord, SpecRecord } from "./types.ts";
+import { readEvents } from "../storage/events.ts";
+import { readHandoffs } from "../storage/handoffs.ts";
+import { listPlans } from "../storage/plans.ts";
+import { listSpecs } from "../storage/specs.ts";
+import { TRELLIS_DIR } from "../system/init.ts";
+import type { EventRecord, PlanRecord, SpecRecord } from "../types.ts";
 
+/**
+ * Result of a blocked plan audit.
+ */
 export interface BlockedPlanAudit {
+	/** The blocked plan record */
 	plan: PlanRecord;
+	/** Latest reason provided during the transition to blocked */
 	latestBlockReason?: string;
+	/** Timestamp of the most recent block event */
 	blockedAt?: string;
 }
 
+/**
+ * Result of a stale artifact audit.
+ */
 export interface StaleArtifactAudit {
+	/** Artifact kind (spec or plan) */
 	kind: "spec" | "plan";
+	/** Artifact ID */
 	id: string;
+	/** Current lifecycle status */
 	status: string;
+	/** Timestamp of the last recorded event or update */
 	lastActivityAt: string;
+	/** Full days since the last activity */
 	staleDays: number;
+	/** Optional linked Seeds issue ID */
 	seed?: string;
+	/** Optional linked spec ID (for plans) */
 	spec?: string;
 }
 
+/**
+ * Result of an orphaned artifact audit.
+ */
 export interface OrphanedAudit {
+	/** Specs that have no linked plans */
 	specsWithoutPlans: SpecRecord[];
+	/** Plans that link to a non-existent spec ID */
 	plansWithMissingSpecs: PlanRecord[];
+	/** Handoff log files that have no matching plan record */
 	handoffsForMissingPlans: Array<{ plan: string; count: number }>;
 }
 
+/**
+ * Identifies plans in the 'blocked' status and extracts their latest block reason.
+ */
 export async function auditBlocked(root: string): Promise<BlockedPlanAudit[]> {
 	const events = await readEvents(root);
 	const blockedPlans = await listPlans(root, { status: "blocked" });
@@ -48,6 +73,9 @@ export async function auditBlocked(root: string): Promise<BlockedPlanAudit[]> {
 	});
 }
 
+/**
+ * Identifies active or blocked artifacts with no recorded activity for a specific number of days.
+ */
 export async function auditStale(
 	root: string,
 	days: number,
@@ -93,6 +121,9 @@ export async function auditStale(
 	return records.sort((left, right) => left.lastActivityAt.localeCompare(right.lastActivityAt));
 }
 
+/**
+ * Identifies broken linkages across specs, plans, and handoff logs.
+ */
 export async function auditOrphaned(root: string): Promise<OrphanedAudit> {
 	const specs = await listSpecs(root);
 	const plans = await listPlans(root);
@@ -126,6 +157,9 @@ export async function auditOrphaned(root: string): Promise<OrphanedAudit> {
 	};
 }
 
+/**
+ * Finds the latest recorded timestamp for a specific artifact in the event log.
+ */
 function latestArtifactActivity(
 	events: EventRecord[],
 	kind: "spec" | "plan",
@@ -137,6 +171,9 @@ function latestArtifactActivity(
 	)?.timestamp;
 }
 
+/**
+ * Returns the most recent event matching a predicate.
+ */
 function latestMatchingEvent(
 	events: EventRecord[],
 	predicate: (event: EventRecord) => boolean,

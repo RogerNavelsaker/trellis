@@ -2,10 +2,10 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createPlan } from "../storage/plans.ts";
+import { createSpec } from "../storage/specs.ts";
+import { initProject } from "../system/init.ts";
 import { auditBlocked, auditOrphaned, auditStale } from "./audit.ts";
-import { initProject } from "./init.ts";
-import { createPlan } from "./plans.ts";
-import { createSpec } from "./specs.ts";
 import { transitionPlan, transitionSpec } from "./transitions.ts";
 
 describe("Trellis audit views", () => {

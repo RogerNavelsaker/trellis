@@ -5,10 +5,18 @@ import { TRELLIS_DIR } from "./init.ts";
 const RETRY_DELAY_MS = 50;
 const MAX_ATTEMPTS = 40;
 
+/**
+ * Returns a promise that resolves after the specified delay.
+ */
 function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Executes an async function with an advisory write lock.
+ * Uses 'wx' flag on file open to ensure exclusive access.
+ * Retries up to MAX_ATTEMPTS times with RETRY_DELAY_MS intervals.
+ */
 export async function withWriteLock<T>(
 	root: string,
 	name: string,

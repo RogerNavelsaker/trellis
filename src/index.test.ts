@@ -2,8 +2,8 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { doctorProject } from "./doctor.ts";
-import { initProject, TRELLIS_EVENTS, TRELLIS_GITIGNORE, TRELLIS_README } from "./init.ts";
+import { doctorProject } from "./system/doctor.ts";
+import { initProject, TRELLIS_EVENTS, TRELLIS_GITIGNORE, TRELLIS_README } from "./system/init.ts";
 
 describe("initProject", () => {
 	let tempDir: string | undefined;

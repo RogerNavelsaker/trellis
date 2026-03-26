@@ -5,6 +5,9 @@ function quoteScalar(value: string): string {
 	return value;
 }
 
+/**
+ * Serializes a flat record of strings or string arrays into a standard Trellis YAML format.
+ */
 export function serializeYaml(record: Record<string, string | string[] | undefined>): string {
 	const lines: string[] = [];
 
@@ -38,6 +41,9 @@ function parseScalar(value: string): string {
 	return trimmed;
 }
 
+/**
+ * Parses Trellis-formatted YAML text into a flat record of strings or string arrays.
+ */
 export function parseYaml(text: string): Record<string, string | string[]> {
 	const result: Record<string, string | string[]> = {};
 	const lines = text.replace(/\r\n/g, "\n").split("\n");

@@ -1,9 +1,9 @@
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { TRELLIS_DIR } from "./init.ts";
-import { withWriteLock } from "./lock.ts";
-import { compactPatch } from "./patch.ts";
-import type { SpecRecord } from "./types.ts";
+import { TRELLIS_DIR } from "../system/init.ts";
+import { withWriteLock } from "../system/lock.ts";
+import type { SpecRecord } from "../types.ts";
+import { compactPatch } from "../workflow/patch.ts";
 import {
 	validateSeed,
 	validateSpecInput,
@@ -14,10 +14,12 @@ import { parseYaml, serializeYaml } from "./yaml.ts";
 
 const SPECS_DIR = "specs";
 
+/** Returns the absolute path to a spec file given its ID. */
 function specPath(root: string, id: string): string {
 	return join(root, TRELLIS_DIR, SPECS_DIR, `${id}.yaml`);
 }
 
+/** Serialize a SpecRecord to YAML. */
 export function serializeSpec(record: SpecRecord): string {
 	return serializeYaml({
 		id: record.id,
@@ -35,6 +37,7 @@ export function serializeSpec(record: SpecRecord): string {
 	});
 }
 
+/** Parse a SpecRecord from YAML text. Validates the structure. */
 export function parseSpec(text: string): SpecRecord {
 	const parsed = parseYaml(text);
 	const record: SpecRecord = {
@@ -55,6 +58,10 @@ export function parseSpec(text: string): SpecRecord {
 	return record;
 }
 
+/**
+ * Create a new spec file.
+ * Throws if the file already exists.
+ */
 export async function createSpec(
 	root: string,
 	input: Omit<SpecRecord, "createdAt" | "updatedAt">,
@@ -68,11 +75,12 @@ export async function createSpec(
 	};
 
 	await withWriteLock(root, "specs", async () => {
+		const path = specPath(root, record.id);
+		if (await Bun.file(path).exists()) {
+			throw new Error(`spec '${record.id}' already exists`);
+		}
 		await mkdir(join(root, TRELLIS_DIR, SPECS_DIR), { recursive: true });
-		await writeFile(specPath(root, record.id), serializeSpec(record), {
-			encoding: "utf8",
-			flag: "wx",
-		});
+		await Bun.write(path, serializeSpec(record));
 	});
 
 	return record;
@@ -83,18 +91,25 @@ export interface SpecFilters {
 	seed?: string;
 }
 
+/** Read a spec from disk by ID. */
 export async function readSpec(root: string, id: string): Promise<SpecRecord> {
+	const path = specPath(root, id);
+	const file = Bun.file(path);
+	if (!(await file.exists())) {
+		throw new Error(`spec '${id}' not found`);
+	}
 	try {
-		return parseSpec(await readFile(specPath(root, id), "utf8"));
+		return parseSpec(await file.text());
 	} catch (error) {
-		if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT") {
-			throw new Error(`spec '${id}' not found`);
-		}
 		const message = error instanceof Error ? error.message : String(error);
 		throw new Error(`corrupt spec '${id}': ${message}`);
 	}
 }
 
+/**
+ * Update an existing spec.
+ * Applies a partial patch and updates the updatedAt timestamp.
+ */
 export async function updateSpec(
 	root: string,
 	id: string,
@@ -133,11 +148,12 @@ export async function updateSpec(
 			...compactPatch(patch),
 			updatedAt: new Date().toISOString(),
 		};
-		await writeFile(specPath(root, id), serializeSpec(updated), "utf8");
+		await Bun.write(specPath(root, id), serializeSpec(updated));
 		return updated;
 	});
 }
 
+/** List all specs in the project, optionally filtered by status or seed. */
 export async function listSpecs(root: string, filters: SpecFilters = {}): Promise<SpecRecord[]> {
 	const dir = join(root, TRELLIS_DIR, SPECS_DIR);
 	const files = (await readdir(dir, { withFileTypes: true }).catch(() => [])).filter(

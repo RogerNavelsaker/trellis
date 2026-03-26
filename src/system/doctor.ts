@@ -1,13 +1,22 @@
-import { access } from "node:fs/promises";
+import { stat } from "node:fs/promises";
 import { join } from "node:path";
 import { TRELLIS_DIR, TRELLIS_EVENTS } from "./init.ts";
 
+/**
+ * Result of a single repo health check.
+ */
 export interface DoctorCheck {
+	/** Machine-readable check name */
 	name: string;
+	/** Whether the check passed */
 	ok: boolean;
+	/** Human-readable details or error message */
 	detail: string;
 }
 
+/**
+ * Validates the existence of all managed .trellis/ artifacts and directories.
+ */
 export async function doctorProject(root: string): Promise<DoctorCheck[]> {
 	const required = [
 		`${TRELLIS_DIR}/README.md`,
@@ -22,8 +31,9 @@ export async function doctorProject(root: string): Promise<DoctorCheck[]> {
 
 	return Promise.all(
 		required.map(async (relativePath) => {
+			const path = join(root, relativePath);
 			try {
-				await access(join(root, relativePath));
+				await stat(path);
 				return { name: relativePath, ok: true, detail: "present" };
 			} catch {
 				return { name: relativePath, ok: false, detail: "missing" };

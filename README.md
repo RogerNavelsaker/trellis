@@ -3,7 +3,7 @@
 Git-native specs, plans, handoffs, and workflow audit history.
 
 [![npm](https://img.shields.io/npm/v/@os-eco/trellis-cli)](https://www.npmjs.com/package/@os-eco/trellis-cli)
-[![CI](https://github.com/RogerNavelsaker/trellis/actions/workflows/ci.yml/badge.svg)](https://github.com/RogerNavelsaker/trellis/actions/workflows/ci.yml)
+[![CI](https://github.com/jayminwest/trellis/actions/workflows/ci.yml/badge.svg)](https://github.com/jayminwest/trellis/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Trellis stores planning artifacts as plain YAML and JSONL files inside your repo. It is designed for the `os-eco` stack, but it works as a standalone CLI with no daemon or server.
@@ -33,14 +33,14 @@ npx @os-eco/trellis-cli --help
 ### Development
 
 ```bash
-git clone https://github.com/RogerNavelsaker/trellis.git
+git clone https://github.com/jayminwest/trellis.git
 cd trellis
 bun install
 bun link              # Makes 'tl' and 'trellis' available globally
 
-bun test
-bun run lint
-bun run typecheck
+bun test              # Run all tests
+bun run lint          # Biome check
+bun run typecheck     # tsc --noEmit
 ```
 
 ## Quick Start
@@ -87,12 +87,12 @@ Every command supports `--json` where noted. ANSI colors respect `NO_COLOR`.
 
 Trellis is a small Bun CLI with a file-backed workflow model:
 
-- `specs.ts` and `plans.ts` own YAML-backed workflow artifacts
-- `handoffs.ts` owns append-only JSONL handoff logs
-- `events.ts` owns the shared event log for transitions and handoffs
-- `transitions.ts` enforces lifecycle rules
-- `lock.ts` provides advisory write locking for concurrent updates
-- `validate.ts` and `yaml.ts` keep storage reads and writes consistent
+- `src/storage/specs.ts` and `src/storage/plans.ts` own YAML-backed workflow artifacts
+- `src/storage/handoffs.ts` owns append-only JSONL handoff logs
+- `src/storage/events.ts` owns the shared event log for transitions and handoffs
+- `src/workflow/transitions.ts` enforces lifecycle rules
+- `src/system/lock.ts` provides advisory write locking for concurrent updates
+- `src/storage/validate.ts` and `src/storage/yaml.ts` keep storage reads and writes consistent
 
 ## How It Works
 
@@ -111,25 +111,34 @@ Trellis keeps workflow state in the repo as plain files. Humans and agents creat
 ```text
 trellis/
   src/
-    index.ts            CLI entry point
-    specs.ts            Spec create/read/update/list
-    plans.ts            Plan create/read/update/list
-    handoffs.ts         Append-only handoff logs
-    events.ts           Event log helpers
-    transitions.ts      Lifecycle transition rules
-    lock.ts             Advisory file locking
-    validate.ts         Input and stored-data validation
-    render.ts           Template rendering
-    templates.ts        Template placeholder contracts
-    doctor.ts           Repo health checks
-    audit.ts            Blocked/stale/orphaned audits
-    yaml.ts             YAML parsing and serialization
-    json.ts             Standard JSON output envelope
+    index.ts                CLI entry point
+    types.ts                Shared TypeScript interfaces
+    commands/               One file per CLI subcommand
+    storage/                YAML/JSONL read/write layer
+      specs.ts              Spec create/read/update/list
+      plans.ts              Plan create/read/update/list
+      handoffs.ts           Append-only handoff logs
+      events.ts             Event log helpers
+      validate.ts           Input and stored-data validation
+      yaml.ts               YAML parsing and serialization
+    system/                 Core runtime utilities
+      json.ts               Standard JSON output envelope
+      init.ts               .trellis/ scaffold + constants
+      doctor.ts             Repo health checks
+      lock.ts               Advisory file locking
+      output.ts             Forest palette + print helpers
+      render.ts             Template rendering
+      templates.ts          Template placeholder contracts
+      utils.ts              Shared CLI helpers
+    workflow/               Business logic
+      transitions.ts        Lifecycle transition rules
+      audit.ts              Blocked/stale/orphaned audits
+      patch.ts              Partial update helpers
   docs/
-    contract.md         Storage contract
-    json-contract.md    Stable JSON response contract
-    lifecycle.md        Ecosystem lifecycle model
-    positioning.md      Responsibility boundary
+    contract.md             Storage contract
+    json-contract.md        Stable JSON response contract
+    lifecycle.md            Ecosystem lifecycle model
+    positioning.md          Responsibility boundary
 ```
 
 ## What's in `.trellis`
@@ -210,8 +219,8 @@ Before cutting a release:
 
 ```bash
 bun test
-bun x tsc --noEmit
-bunx @biomejs/biome check .
+bun run lint
+bun run typecheck
 ```
 
 Release expectations:
@@ -231,10 +240,6 @@ Trellis is part of the [os-eco](https://github.com/jayminwest/os-eco) AI agent t
 ## Contributing
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## Transfer Intent
-
-Trellis is being incubated under `RogerNavelsaker/trellis` with the intent to transfer it into the `os-eco` umbrella once the direction and ownership path are confirmed.
 
 ## License
 

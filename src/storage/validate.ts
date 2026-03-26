@@ -1,4 +1,4 @@
-import type { PlanRecord, SpecRecord } from "./types.ts";
+import type { PlanRecord, SpecRecord } from "../types.ts";
 
 const SEED_ID_RE = /^[A-Za-z][A-Za-z0-9_-]*-[A-Za-z0-9._-]+$/;
 
@@ -8,6 +8,9 @@ function requireNonEmpty(value: string, field: string): void {
 	}
 }
 
+/**
+ * Validates that a seed ID (if provided) matches the expected format.
+ */
 export function validateSeed(seed: string | undefined): void {
 	if (seed && !SEED_ID_RE.test(seed)) {
 		throw new Error(`seed must look like a Seeds ID, got '${seed}'`);
@@ -21,6 +24,9 @@ function validateId(id: string, field: string): void {
 	}
 }
 
+/**
+ * Validates user input when creating a new specification.
+ */
 export function validateSpecInput(input: Omit<SpecRecord, "createdAt" | "updatedAt">): void {
 	validateId(input.id, "spec id");
 	requireNonEmpty(input.title, "title");
@@ -31,6 +37,9 @@ export function validateSpecInput(input: Omit<SpecRecord, "createdAt" | "updated
 	}
 }
 
+/**
+ * Validates user input when creating a new plan.
+ */
 export function validatePlanInput(input: Omit<PlanRecord, "createdAt" | "updatedAt">): void {
 	validateId(input.id, "plan id");
 	requireNonEmpty(input.title, "title");
@@ -41,6 +50,9 @@ export function validatePlanInput(input: Omit<PlanRecord, "createdAt" | "updated
 	}
 }
 
+/**
+ * Validates a specification status string.
+ */
 export function validateSpecStatus(status: string | undefined): void {
 	if (status === undefined) return;
 	if (!["draft", "active", "done"].includes(status)) {
@@ -48,6 +60,9 @@ export function validateSpecStatus(status: string | undefined): void {
 	}
 }
 
+/**
+ * Validates a plan status string.
+ */
 export function validatePlanStatus(status: string | undefined): void {
 	if (status === undefined) return;
 	if (!["draft", "active", "blocked", "done"].includes(status)) {
@@ -55,6 +70,9 @@ export function validatePlanStatus(status: string | undefined): void {
 	}
 }
 
+/**
+ * Validates the full structure of a stored specification record.
+ */
 export function validateStoredSpec(record: SpecRecord): void {
 	validateSpecInput({
 		id: record.id,
@@ -70,6 +88,9 @@ export function validateStoredSpec(record: SpecRecord): void {
 	} as Omit<SpecRecord, "createdAt" | "updatedAt">);
 }
 
+/**
+ * Validates the full structure of a stored plan record.
+ */
 export function validateStoredPlan(record: PlanRecord): void {
 	validatePlanInput({
 		id: record.id,
