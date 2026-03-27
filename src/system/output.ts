@@ -1,5 +1,7 @@
 import chalk from "chalk";
 
+export { chalk };
+
 /**
  * Forest palette for os-eco branding.
  */
@@ -44,4 +46,12 @@ export function printWarning(msg: string): void {
  */
 export function printConfirm(message: string): void {
 	if (!_quiet) console.log(message);
+}
+
+/**
+ * Print a status line without suppressing output in quiet mode.
+ * Used for commands whose primary result is the line-oriented report itself.
+ */
+export function printStatus(message: string): void {
+	console.log(message);
 }

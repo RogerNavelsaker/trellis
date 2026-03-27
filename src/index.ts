@@ -2,7 +2,6 @@
 
 import { join } from "node:path";
 import { cwd, platform } from "node:process";
-import chalk from "chalk";
 import { Command, Help } from "commander";
 import * as artifact from "./commands/artifact.ts";
 import * as audit from "./commands/audit.ts";
@@ -15,7 +14,15 @@ import * as template from "./commands/template.ts";
 import { doctorProject } from "./system/doctor.ts";
 import { initProject } from "./system/init.ts";
 import { jsonError, jsonOutput } from "./system/json.ts";
-import { brand, muted, printError, printSuccess, setQuiet } from "./system/output.ts";
+import {
+	brand,
+	chalk,
+	muted,
+	printError,
+	printStatus,
+	printSuccess,
+	setQuiet,
+} from "./system/output.ts";
 
 export const VERSION = "0.1.0";
 
@@ -39,60 +46,60 @@ async function main(): Promise<void> {
 	}
 
 	const program = new Command();
+	let timingStart: number | undefined;
 
 	program
-		.name("trellis")
+		.name("tl")
 		.description("Git-native specs, plans, and handoff artifacts for the os-eco toolchain")
 		.version(VERSION, "-v, --version", "Print version")
-		.option("--json", "Machine-readable JSON output")
 		.option("-q, --quiet", "Suppress non-error output")
+		.option("--json", "JSON output")
 		.option("--verbose", "Extra diagnostic output")
-		.option("--timing", "Print execution time to stderr")
+		.option("--timing", "Print command execution time to stderr")
 		.addHelpCommand(false)
 		.configureHelp({
 			formatHelp(cmd: Command, helper: Help): string {
 				if (cmd.parent) {
 					return Help.prototype.formatHelp.call(helper, cmd, helper);
 				}
-				const header = `${brand(chalk.bold("trellis"))} ${muted(`v${VERSION}`)} — Git-native planning artifacts\n\nUsage: tl <command> [options]`;
+				const colWidth = 20;
+				const lines: string[] = [];
 
-				const cmdLines: string[] = ["\nCommands:"];
-				for (const sub of cmd.commands) {
-					const name = sub.name();
-					const argStr = sub.registeredArguments
-						.map((a) => (a.required ? `<${a.name()}>` : `[${a.name()}]`))
-						.join(" ");
-					const rawEntry = argStr ? `${name} ${argStr}` : name;
-					const colored = argStr ? `${chalk.green(name)} ${chalk.dim(argStr)}` : chalk.green(name);
-					const pad = " ".repeat(Math.max(18 - rawEntry.length, 2));
-					cmdLines.push(`  ${colored}${pad}${sub.description()}`);
+				lines.push(
+					`${brand(chalk.bold("trellis"))} ${muted(`v${VERSION}`)} — git-native specs, plans, and handoff artifacts`,
+				);
+				lines.push("");
+				lines.push(`Usage: ${chalk.dim("tl")} <command> [options]`);
+				lines.push("");
+
+				const visibleCommands = helper.visibleCommands(cmd);
+				if (visibleCommands.length > 0) {
+					lines.push("Commands:");
+					for (const sub of visibleCommands) {
+						const term = helper.subcommandTerm(sub);
+						const firstSpace = term.indexOf(" ");
+						const name = firstSpace === -1 ? term : term.slice(0, firstSpace);
+						const args = firstSpace === -1 ? "" : term.slice(firstSpace);
+						const coloredTerm = `${chalk.green(name)}${args ? chalk.dim(args) : ""}`;
+						const padding = " ".repeat(Math.max(2, colWidth - term.length));
+						lines.push(`  ${coloredTerm}${padding}${helper.subcommandDescription(sub)}`);
+					}
+					lines.push("");
 				}
 
-				const optsLines: string[] = ["\nOptions:"];
-				const opts: [string, string][] = [
-					["-h, --help", "Show help"],
-					["-v, --version", "Print version"],
-					["--json", "Output as JSON"],
-					["-q, --quiet", "Suppress non-error output"],
-					["--verbose", "Extra diagnostic output"],
-					["--timing", "Show command execution time"],
-				];
-				for (const [flags, desc] of opts) {
-					const pad = " ".repeat(Math.max(18 - flags.length, 2));
-					optsLines.push(`  ${chalk.green(flags)}${pad}${desc}`);
+				const visibleOptions = helper.visibleOptions(cmd);
+				if (visibleOptions.length > 0) {
+					lines.push("Options:");
+					for (const option of visibleOptions) {
+						const flags = helper.optionTerm(option);
+						const padding = " ".repeat(Math.max(2, colWidth - flags.length));
+						lines.push(`  ${chalk.dim(flags)}${padding}${helper.optionDescription(option)}`);
+					}
+					lines.push("");
 				}
 
-				return [
-					header,
-					cmdLines.join("\n"),
-					optsLines.join("\n"),
-					"",
-					"Docs:",
-					`  ${chalk.cyan("https://github.com/jayminwest/trellis")}`,
-					"",
-					"Scope:",
-					"  Trellis owns repo-local specs, plans, and handoff artifacts.",
-				].join("\n");
+				lines.push(`Run '${chalk.dim("tl")} <command> --help' for command-specific help.`);
+				return `${lines.join("\n")}\n`;
 			},
 		});
 
@@ -140,7 +147,7 @@ async function main(): Promise<void> {
 			}
 			for (const check of checks) {
 				const icon = check.ok ? brand("✓") : chalk.red("✗");
-				console.log(`${icon} ${check.name} ${check.detail}`);
+				printStatus(`${icon} ${check.name} ${check.detail}`);
 			}
 			if (failed.length > 0) process.exitCode = 1;
 		});
@@ -168,15 +175,17 @@ async function main(): Promise<void> {
 		});
 
 	program.hook("preAction", (thisCommand) => {
-		const opts = thisCommand.opts<{ quiet?: boolean }>();
+		const opts = thisCommand.optsWithGlobals<{ quiet?: boolean; timing?: boolean }>();
 		if (opts.quiet) setQuiet(true);
+		if (opts.timing) timingStart = performance.now();
 	});
 
-	const timingStart = process.argv.includes("--timing") ? performance.now() : undefined;
 	await program.parseAsync(process.argv);
 	if (timingStart !== undefined) {
 		const elapsed = performance.now() - timingStart;
-		process.stderr.write(`\ntiming: ${elapsed.toFixed(1)}ms\n`);
+		const formatted =
+			elapsed < 1000 ? `${Math.round(elapsed)}ms` : `${(elapsed / 1000).toFixed(2)}s`;
+		process.stderr.write(`${muted(`Done in ${formatted}`)}\n`);
 	}
 }
 
@@ -189,6 +198,11 @@ function shouldPrintVersionJson(args: string[]): boolean {
 }
 
 main().catch((err) => {
-	console.error(err);
+	const message = err instanceof Error ? err.message : String(err);
+	if (process.argv.includes("--json")) {
+		jsonError("trellis", message);
+		process.exit(1);
+	}
+	printError(message);
 	process.exit(1);
 });

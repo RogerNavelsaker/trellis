@@ -3,7 +3,7 @@
 Git-native specs, plans, handoffs, and workflow audit history.
 
 [![npm](https://img.shields.io/npm/v/@os-eco/trellis-cli)](https://www.npmjs.com/package/@os-eco/trellis-cli)
-[![CI](https://github.com/jayminwest/trellis/actions/workflows/ci.yml/badge.svg)](https://github.com/jayminwest/trellis/actions/workflows/ci.yml)
+[![CI](https://github.com/RogerNavelsaker/trellis/actions/workflows/ci.yml/badge.svg)](https://github.com/RogerNavelsaker/trellis/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Trellis stores planning artifacts as plain YAML and JSONL files inside your repo. It is designed for the `os-eco` stack, but it works as a standalone CLI with no daemon or server.
@@ -33,7 +33,7 @@ npx @os-eco/trellis-cli --help
 ### Development
 
 ```bash
-git clone https://github.com/jayminwest/trellis.git
+git clone https://github.com/RogerNavelsaker/trellis.git
 cd trellis
 bun install
 bun link              # Makes 'tl' and 'trellis' available globally

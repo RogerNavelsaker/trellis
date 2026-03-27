@@ -7,11 +7,11 @@
 	"type": "module",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/jayminwest/trellis.git"
+		"url": "https://github.com/RogerNavelsaker/trellis.git"
 	},
-	"homepage": "https://github.com/jayminwest/trellis#readme",
+	"homepage": "https://github.com/RogerNavelsaker/trellis#readme",
 	"bugs": {
-		"url": "https://github.com/jayminwest/trellis/issues"
+		"url": "https://github.com/RogerNavelsaker/trellis/issues"
 	},
 	"keywords": [
 		"os-eco",

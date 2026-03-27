@@ -13,6 +13,14 @@ The top-level contract is stable:
   - `command: <command-name>`
   - `error: <message>`
 
+When `--json` is enabled, Trellis must emit exactly one JSON object to stdout for the command result.
+That means:
+
+- no ANSI color codes in the JSON payload
+- no human-readable status lines mixed into stdout
+- no stray `console.log` or `console.error` output outside the JSON envelope
+- top-level failures should still resolve to the same envelope shape
+
 ## Top-Level Success Shapes
 
 Commands that operate on a single artifact return a named record:
