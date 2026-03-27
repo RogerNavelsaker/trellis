@@ -7,6 +7,8 @@ on:
 
 jobs:
   publish:
+    # Keep the npm publish workflow disabled until the @os-eco release path is live.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
