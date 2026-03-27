@@ -132,6 +132,10 @@ describe("trellis CLI smoke", () => {
 		expect(version.command).toBe("version");
 		expect(version.name).toBe("@os-eco/trellis-cli");
 
+		const help = await run(["--help"]);
+		expect(help.stdout).not.toContain("version-json");
+		expect(help.stdout).toContain("completions <shell>");
+
 		const bashCompletions = await run(["completions", "bash"]);
 		expect(bashCompletions.stdout).toContain("complete -F _trellis_completions");
 	});

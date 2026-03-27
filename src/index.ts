@@ -162,18 +162,6 @@ async function main(): Promise<void> {
 	completions.register(program);
 	artifact.register(program);
 
-	program
-		.command("version-json")
-		.description("Print structured version metadata")
-		.action(() => {
-			jsonOutput("version", {
-				name: packageName(),
-				version: VERSION,
-				runtime: runtimeString(),
-				platform,
-			});
-		});
-
 	program.hook("preAction", (thisCommand) => {
 		const opts = thisCommand.optsWithGlobals<{ quiet?: boolean; timing?: boolean }>();
 		if (opts.quiet) setQuiet(true);
@@ -190,11 +178,7 @@ async function main(): Promise<void> {
 }
 
 function shouldPrintVersionJson(args: string[]): boolean {
-	return (
-		args.includes("--json") &&
-		(args.includes("--version") || args.includes("-v")) &&
-		!args.includes("version-json")
-	);
+	return args.includes("--json") && (args.includes("--version") || args.includes("-v"));
 }
 
 main().catch((err) => {
