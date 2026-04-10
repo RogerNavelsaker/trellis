@@ -1,0 +1,143 @@
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { readEvents } from "../storage/events.ts";
+import { readHandoffs } from "../storage/handoffs.ts";
+import { createPlan, readPlan } from "../storage/plans.ts";
+import { createSpec, readSpec } from "../storage/specs.ts";
+import { initProject } from "../system/init.ts";
+import { transitionPlan, transitionSpec } from "./transitions.ts";
+
+describe("Trellis lifecycle transitions", () => {
+	let tempDir: string | undefined;
+
+	afterEach(async () => {
+		if (tempDir) {
+			await rm(tempDir, { recursive: true, force: true });
+			tempDir = undefined;
+		}
+	});
+
+	test("spec lifecycle follows draft -> active -> done", async () => {
+		tempDir = await mkdtemp(join(tmpdir(), "trellis-life-"));
+		await initProject(tempDir);
+		await createSpec(tempDir, {
+			id: "spec-a",
+			title: "Spec A",
+			seed: "seed-1",
+			status: "draft",
+			objective: "Objective",
+			constraints: [],
+			acceptance: [],
+			references: [],
+		});
+
+		await transitionSpec(tempDir, "spec-a", "active");
+		expect((await readSpec(tempDir, "spec-a")).status).toBe("active");
+		const activeEvent = (await readEvents(tempDir)).at(-1);
+		expect(activeEvent?.type).toBe("spec.transition");
+		expect(activeEvent?.spec).toBe("spec-a");
+
+		await expect(transitionSpec(tempDir, "spec-a", "done")).rejects.toThrow(
+			"completing a spec requires --summary",
+		);
+		await transitionSpec(tempDir, "spec-a", "done", {
+			summary: "Spec outcome recorded",
+		});
+		expect((await readSpec(tempDir, "spec-a")).status).toBe("done");
+		expect((await readSpec(tempDir, "spec-a")).completionSummary).toBe("Spec outcome recorded");
+		expect((await readSpec(tempDir, "spec-a")).completedAt).toBeTruthy();
+
+		await expect(transitionSpec(tempDir, "spec-a", "active")).rejects.toThrow(
+			"spec cannot transition from done to active",
+		);
+	});
+
+	test("plan lifecycle supports block/resume/complete and optional handoff recording", async () => {
+		tempDir = await mkdtemp(join(tmpdir(), "trellis-life-"));
+		await initProject(tempDir);
+		await createSpec(tempDir, {
+			id: "spec-a",
+			title: "Spec A",
+			seed: "seed-1",
+			status: "draft",
+			objective: "Objective",
+			constraints: [],
+			acceptance: [],
+			references: [],
+		});
+		await createPlan(tempDir, {
+			id: "plan-a",
+			title: "Plan A",
+			seed: "seed-1",
+			spec: "spec-a",
+			status: "draft",
+			summary: "Summary",
+			steps: ["First"],
+		});
+
+		await transitionPlan(tempDir, "plan-a", "active");
+		expect((await readPlan(tempDir, "plan-a")).status).toBe("active");
+
+		await transitionPlan(tempDir, "plan-a", "blocked", {
+			reason: "Waiting for review bandwidth",
+			actor: "lead",
+			to: "reviewer",
+		});
+		expect((await readPlan(tempDir, "plan-a")).status).toBe("blocked");
+		expect((await readHandoffs(tempDir, "plan-a")).at(-1)?.summary).toBe(
+			"Waiting for review bandwidth",
+		);
+		expect((await readEvents(tempDir)).some((event) => event.type === "plan.transition")).toBe(
+			true,
+		);
+
+		await transitionPlan(tempDir, "plan-a", "active");
+		await expect(transitionPlan(tempDir, "plan-a", "done")).rejects.toThrow(
+			"completing a plan requires --summary",
+		);
+		await transitionPlan(tempDir, "plan-a", "done", {
+			summary: "Implementation merged",
+			actor: "reviewer",
+			to: "lead",
+		});
+		expect((await readPlan(tempDir, "plan-a")).status).toBe("done");
+		expect((await readPlan(tempDir, "plan-a")).completionSummary).toBe("Implementation merged");
+		expect((await readPlan(tempDir, "plan-a")).completedAt).toBeTruthy();
+		// plan complete with actor+to should also record a durable handoff
+		expect((await readHandoffs(tempDir, "plan-a")).at(-1)?.summary).toBe("Implementation merged");
+		expect((await readHandoffs(tempDir, "plan-a")).at(-1)?.from).toBe("reviewer");
+	});
+
+	test("spec completion is blocked until linked plans are done", async () => {
+		tempDir = await mkdtemp(join(tmpdir(), "trellis-life-"));
+		await initProject(tempDir);
+		await createSpec(tempDir, {
+			id: "spec-a",
+			title: "Spec A",
+			seed: "seed-1",
+			status: "draft",
+			objective: "Objective",
+			constraints: [],
+			acceptance: [],
+			references: [],
+		});
+		await createPlan(tempDir, {
+			id: "plan-a",
+			title: "Plan A",
+			seed: "seed-1",
+			spec: "spec-a",
+			status: "active",
+			summary: "Summary",
+			steps: ["First"],
+		});
+
+		await transitionSpec(tempDir, "spec-a", "active");
+		await expect(
+			transitionSpec(tempDir, "spec-a", "done", {
+				summary: "Attempted closure",
+			}),
+		).rejects.toThrow("spec 'spec-a' cannot complete until linked plans are done: plan-a");
+	});
+});
