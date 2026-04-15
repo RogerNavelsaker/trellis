@@ -12,6 +12,7 @@ import * as list from "./commands/list.ts";
 import * as plan from "./commands/plan.ts";
 import * as prime from "./commands/prime.ts";
 import * as spec from "./commands/spec.ts";
+import * as sync from "./commands/sync.ts";
 import * as template from "./commands/template.ts";
 import { doctorProject } from "./system/doctor.ts";
 import { initProject } from "./system/init.ts";
@@ -157,6 +158,7 @@ async function main(): Promise<void> {
 	// Register subcommands
 	prime.register(program);
 	list.register(program);
+	sync.register(program);
 	spec.register(program);
 	plan.register(program);
 	audit.register(program);
