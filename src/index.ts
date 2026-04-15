@@ -31,7 +31,7 @@ import {
 	setQuiet,
 } from "./system/output.ts";
 
-export const VERSION = "0.1.1";
+export const VERSION = "0.2.0";
 
 function packageName(): string {
 	return "@os-eco/trellis-cli";
