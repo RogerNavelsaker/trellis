@@ -8,6 +8,7 @@ import * as audit from "./commands/audit.ts";
 import * as completions from "./commands/completions.ts";
 import * as event from "./commands/event.ts";
 import * as handoff from "./commands/handoff.ts";
+import * as list from "./commands/list.ts";
 import * as plan from "./commands/plan.ts";
 import * as prime from "./commands/prime.ts";
 import * as spec from "./commands/spec.ts";
@@ -155,6 +156,7 @@ async function main(): Promise<void> {
 
 	// Register subcommands
 	prime.register(program);
+	list.register(program);
 	spec.register(program);
 	plan.register(program);
 	audit.register(program);
