@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tl prime` — emits a compact agent-priming summary of active specs, plans, blocked plans with reasons, and recent handoffs. Supports `--full`, `--compact`, `--since`, `--status`, `--limit`, `--budget`, and `--json`.
 - `tl list` — unified top-level view across specs, plans, and handoffs. Supports `--type`, `--status`, `--since`, `--plan`, `--limit`, and `--json`. `tl spec list` / `tl plan list` still work.
 - `tl sync` — convenience wrapper that stages `.trellis/` and commits. Default message `trellis: sync artifacts` with an auto-generated body listing changed files. Errors outside a git work tree; no-ops when the index has no staged `.trellis/` changes. Supports `--message`, `--dry-run`, and `--json`.
+- `tl ready` — lists unblocked plans (draft or active) plus active specs without a linked plan.
+- `tl stats` — aggregate counts: specs/plans by status, plan step totals, handoffs (total + last 7d/30d), and orphan counts.
+- `tl search <query>` — case-insensitive substring search across spec titles/objectives, plan titles/summaries/step notes, and handoff summaries. Supports `--type` and `--limit`.
+- `tl onboard` — writes or updates a marker-delimited Trellis section in `CLAUDE.md` / `AGENTS.md`. Falls back to stdout when neither file exists. Supports `--stdout` and `--file`.
 
 ## [0.1.1] - 2026-03-27
 
