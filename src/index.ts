@@ -9,9 +9,13 @@ import * as completions from "./commands/completions.ts";
 import * as event from "./commands/event.ts";
 import * as handoff from "./commands/handoff.ts";
 import * as list from "./commands/list.ts";
+import * as onboard from "./commands/onboard.ts";
 import * as plan from "./commands/plan.ts";
 import * as prime from "./commands/prime.ts";
+import * as ready from "./commands/ready.ts";
+import * as search from "./commands/search.ts";
 import * as spec from "./commands/spec.ts";
+import * as stats from "./commands/stats.ts";
 import * as sync from "./commands/sync.ts";
 import * as template from "./commands/template.ts";
 import { doctorProject } from "./system/doctor.ts";
@@ -158,7 +162,11 @@ async function main(): Promise<void> {
 	// Register subcommands
 	prime.register(program);
 	list.register(program);
+	ready.register(program);
+	search.register(program);
+	stats.register(program);
 	sync.register(program);
+	onboard.register(program);
 	spec.register(program);
 	plan.register(program);
 	audit.register(program);
