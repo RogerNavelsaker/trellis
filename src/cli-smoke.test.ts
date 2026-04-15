@@ -127,6 +127,15 @@ describe("trellis CLI smoke", () => {
 		const blocked = JSON.parse((await run(["audit", "blocked", "--json"])).stdout);
 		expect(blocked.count).toBe(1);
 
+		const prime = JSON.parse((await run(["prime", "--json"])).stdout);
+		expect(prime.success).toBe(true);
+		expect(prime.command).toBe("prime");
+		expect(Array.isArray(prime.specs)).toBe(true);
+		expect(Array.isArray(prime.plans)).toBe(true);
+		expect(Array.isArray(prime.blocked)).toBe(true);
+		expect(prime.blocked.length).toBe(1);
+		expect(Array.isArray(prime.handoffs)).toBe(true);
+
 		const version = JSON.parse((await run(["--version", "--json"])).stdout);
 		expect(version.success).toBe(true);
 		expect(version.command).toBe("version");

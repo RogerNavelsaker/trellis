@@ -75,7 +75,7 @@ Every command supports `--json` where noted. ANSI colors respect `NO_COLOR`.
 
 | Area | Commands |
 | --- | --- |
-| Project | `init`, `doctor`, `show`, `inspect`, `timeline` |
+| Project | `init`, `doctor`, `prime`, `show`, `inspect`, `timeline` |
 | Specs | `spec create`, `spec show`, `spec update`, `spec start`, `spec complete`, `spec list` |
 | Plans | `plan create`, `plan show`, `plan update`, `plan start`, `plan block`, `plan resume`, `plan complete`, `plan list` |
 | Handoffs | `handoff append`, `handoff show`, `handoff latest`, `handoff list` |
