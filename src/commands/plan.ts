@@ -21,6 +21,7 @@ export function register(program: Command): void {
 
 	plan
 		.command("create")
+		.description("Create a new execution plan")
 		.argument("<id>", "Plan identifier")
 		.requiredOption("--title <title>", "Plan title")
 		.option("--seed <seed>", "Linked Seeds issue ID")
@@ -52,6 +53,7 @@ export function register(program: Command): void {
 
 	plan
 		.command("show")
+		.description("Show plan details")
 		.argument("<id>", "Plan identifier")
 		.action(async (id: string) => {
 			const global = program.opts<{ json?: boolean }>();
@@ -69,6 +71,7 @@ export function register(program: Command): void {
 
 	plan
 		.command("update")
+		.description("Update plan fields")
 		.argument("<id>", "Plan identifier")
 		.option("--title <title>", "Plan title")
 		.option("--seed <seed>", "Linked Seeds issue ID")
@@ -186,6 +189,7 @@ export function register(program: Command): void {
 
 	plan
 		.command("list")
+		.description("List plans with filters")
 		.option("--status <status>", "Filter by status")
 		.option("--seed <seed>", "Filter by Seeds issue ID")
 		.option("--spec <spec>", "Filter by linked spec ID")

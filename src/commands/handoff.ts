@@ -14,6 +14,7 @@ export function register(program: Command): void {
 
 	handoff
 		.command("append")
+		.description("Record a new handoff for a plan")
 		.argument("<plan>", "Plan identifier")
 		.requiredOption("--from <name>", "Sender identity")
 		.requiredOption("--to <name>", "Recipient identity")
@@ -43,6 +44,7 @@ export function register(program: Command): void {
 
 	handoff
 		.command("show")
+		.description("Show handoff log for a plan")
 		.argument("<plan>", "Plan identifier")
 		.option("--from <name>", "Filter by sender")
 		.option("--to <name>", "Filter by recipient")

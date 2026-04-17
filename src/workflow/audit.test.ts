@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createPlan } from "../storage/plans.ts";
@@ -91,9 +91,8 @@ describe("Trellis audit views", () => {
 			acceptance: [],
 			references: [],
 		});
-		await mkdir(join(tempDir, ".trellis", "handoffs"), { recursive: true });
 		await writeFile(
-			join(tempDir, ".trellis", "handoffs", "missing-plan.jsonl"),
+			join(tempDir, ".trellis", "plans", "missing-plan.jsonl"),
 			`${JSON.stringify({
 				timestamp: "2026-03-01T00:00:00.000Z",
 				plan: "missing-plan",

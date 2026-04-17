@@ -138,7 +138,7 @@ export async function auditOrphaned(root: string): Promise<OrphanedAudit> {
 	}
 
 	const handoffFiles = (
-		await readdir(join(root, TRELLIS_DIR, "handoffs"), {
+		await readdir(join(root, TRELLIS_DIR, "plans"), {
 			withFileTypes: true,
 		}).catch(() => [])
 	).filter((entry) => entry.isFile() && entry.name.endsWith(".jsonl"));

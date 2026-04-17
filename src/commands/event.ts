@@ -13,6 +13,7 @@ export function register(program: Command): void {
 
 	event
 		.command("list")
+		.description("List transition and handoff events")
 		.option("--kind <kind>", "Filter by artifact kind")
 		.option("--type <type>", "Filter by event type")
 		.option("--artifact <id>", "Filter by artifact ID")

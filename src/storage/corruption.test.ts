@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { initProject } from "../system/init.ts";
@@ -49,9 +49,8 @@ describe("Trellis corruption handling", () => {
 	test("reports corrupt handoff logs with line numbers", async () => {
 		tempDir = await mkdtemp(join(tmpdir(), "trellis-corrupt-"));
 		await initProject(tempDir);
-		await mkdir(join(tempDir, ".trellis", "handoffs"), { recursive: true });
 		await writeFile(
-			join(tempDir, ".trellis", "handoffs", "plan-a.jsonl"),
+			join(tempDir, ".trellis", "plans", "plan-a.jsonl"),
 			'{"plan":"plan-a","from":"lead","to":"builder","summary":"ok","timestamp":"2026-03-24T00:00:00.000Z"}\n{bad json}\n',
 			"utf8",
 		);

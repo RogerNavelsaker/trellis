@@ -5,13 +5,13 @@ import { withWriteLock } from "../system/lock.ts";
 import type { HandoffRecord } from "../types.ts";
 import { appendEvent } from "./events.ts";
 
-const HANDOFFS_DIR = "handoffs";
+const PLANS_DIR = "plans";
 
 /**
- * Returns the absolute path to a plan's handoff JSONL log.
+ * Returns the absolute path to a plan's handoff JSONL log (co-located with plans).
  */
 function handoffPath(root: string, plan: string): string {
-	return join(root, TRELLIS_DIR, HANDOFFS_DIR, `${plan}.jsonl`);
+	return join(root, TRELLIS_DIR, PLANS_DIR, `${plan}.jsonl`);
 }
 
 /**
@@ -27,7 +27,7 @@ export async function appendHandoff(
 	};
 
 	await withWriteLock(root, `handoff-${record.plan}`, async () => {
-		const dir = join(root, TRELLIS_DIR, HANDOFFS_DIR);
+		const dir = join(root, TRELLIS_DIR, PLANS_DIR);
 		await mkdir(dir, { recursive: true });
 		await appendFile(handoffPath(root, record.plan), `${JSON.stringify(record)}\n`, "utf8");
 	});

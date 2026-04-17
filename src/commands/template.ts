@@ -35,6 +35,7 @@ export function register(program: Command): void {
 
 	template
 		.command("show")
+		.description("Show a template file")
 		.argument("<kind>", "Template kind: spec, plan, or handoff")
 		.action(async (kind: TemplateKind) => {
 			const global = program.opts<{ json?: boolean }>();

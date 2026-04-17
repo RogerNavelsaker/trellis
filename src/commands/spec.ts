@@ -20,6 +20,7 @@ export function register(program: Command): void {
 
 	spec
 		.command("create")
+		.description("Create a new spec")
 		.argument("<id>", "Spec identifier")
 		.requiredOption("--title <title>", "Spec title")
 		.requiredOption("--objective <text>", "Spec objective/body")
@@ -53,6 +54,7 @@ export function register(program: Command): void {
 
 	spec
 		.command("show")
+		.description("Show spec details")
 		.argument("<id>", "Spec identifier")
 		.action(async (id: string) => {
 			const global = program.opts<{ json?: boolean }>();
@@ -70,6 +72,7 @@ export function register(program: Command): void {
 
 	spec
 		.command("update")
+		.description("Update spec fields")
 		.argument("<id>", "Spec identifier")
 		.option("--title <title>", "Spec title")
 		.option("--objective <text>", "Spec objective/body")
@@ -142,6 +145,7 @@ export function register(program: Command): void {
 
 	spec
 		.command("list")
+		.description("List specs with filters")
 		.option("--status <status>", "Filter by status")
 		.option("--seed <seed>", "Filter by Seeds issue ID")
 		.action(async (opts) => {

@@ -24,7 +24,6 @@ describe("initProject", () => {
 		expect(await Bun.file(join(tempDir, ".trellis", ".gitignore")).text()).toBe(TRELLIS_GITIGNORE);
 		expect((await stat(join(tempDir, ".trellis", "specs"))).isDirectory()).toBe(true);
 		expect((await stat(join(tempDir, ".trellis", "plans"))).isDirectory()).toBe(true);
-		expect((await stat(join(tempDir, ".trellis", "handoffs"))).isDirectory()).toBe(true);
 		expect((await stat(join(tempDir, ".trellis", "templates"))).isDirectory()).toBe(true);
 		expect(await Bun.file(join(tempDir, ".trellis", TRELLIS_EVENTS)).text()).toBe("");
 	});

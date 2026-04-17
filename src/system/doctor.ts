@@ -23,7 +23,6 @@ export async function doctorProject(root: string): Promise<DoctorCheck[]> {
 		`${TRELLIS_DIR}/.gitignore`,
 		`${TRELLIS_DIR}/specs`,
 		`${TRELLIS_DIR}/plans`,
-		`${TRELLIS_DIR}/handoffs`,
 		`${TRELLIS_DIR}/templates`,
 		`${TRELLIS_DIR}/locks`,
 		`${TRELLIS_DIR}/${TRELLIS_EVENTS}`,

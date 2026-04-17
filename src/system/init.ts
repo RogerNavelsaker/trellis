@@ -11,8 +11,6 @@ export const TRELLIS_GITIGNORE = `*
 !specs/**
 !plans/
 !plans/**
-!handoffs/
-!handoffs/**
 !templates/
 !templates/**
 `;
@@ -37,7 +35,6 @@ export async function initProject(root: string): Promise<void> {
 	const trellisDir = join(root, TRELLIS_DIR);
 	await mkdir(join(trellisDir, "specs"), { recursive: true });
 	await mkdir(join(trellisDir, "plans"), { recursive: true });
-	await mkdir(join(trellisDir, "handoffs"), { recursive: true });
 	await mkdir(join(trellisDir, "templates"), { recursive: true });
 	await mkdir(join(trellisDir, "locks"), { recursive: true });
 	await writeFileIfAbsent(join(trellisDir, ".gitignore"), TRELLIS_GITIGNORE);
