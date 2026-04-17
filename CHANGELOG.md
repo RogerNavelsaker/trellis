@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-04-17
+
+### Changed
+- Handoff logs moved from `.trellis/handoffs/<plan>.jsonl` to `.trellis/plans/<plan>.jsonl`. Storage is now split into exactly two subdirectories: `specs/` and `plans/`.
+- All `tl spec`, `tl plan`, `tl handoff`, `tl event`, and `tl template` subcommands now have descriptions in `--help` output, matching the style of sibling tools.
+
 ## [0.2.0] - 2026-04-15
 
 ### Added
