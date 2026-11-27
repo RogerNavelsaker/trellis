@@ -1,7 +1,7 @@
 defaultRole: pi
 defaultBranch: main
 runBranchPrefix: warren
-agentImage: ghcr.io/nacosolutions/senshac-warren-agent@sha256:5f44b7bf1747f12ff3db2397c276f1015b41878b2283b536ee15830f453a3fec
+agentImage: ghcr.io/rogernavelsaker/warren-agent@sha256:e810f33eb23c5a5959d1209b5eb81b6c811f1aed97632f6abbfb4900b680b41f
 
 ciFixer:
   enabled: true
